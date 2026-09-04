@@ -94,6 +94,10 @@
   .period-pick{font-size:10px;border:1px solid #D8B9D8;border-radius:3px;background:#F3E8F3;color:#8A3F8A;padding:1px 0;font-family:inherit;flex:none;width:44px;cursor:pointer;}
   .class-block.extra-class{border-left-color:#D8B9D8;}
   /* 그 분기 진도의 마지막 차시 */
+  .end-toggle{border:1px solid var(--ink-10);background:transparent;color:var(--ink-30);font-size:9px;
+    border-radius:8px;padding:0 5px;cursor:pointer;font-family:inherit;line-height:14px;flex:none;opacity:.45;}
+  .end-toggle:hover{opacity:1;border-color:#C8863C;color:#C8863C;}
+  .end-toggle.on{opacity:1;background:#C8863C;border-color:#C8863C;color:#fff;font-weight:700;}
   .class-block.last-lesson{border-left-color:#C8863C;background:#FBF2E4;border-radius:2px;padding:2px 4px 3px 5px;}
   .class-block.last-lesson .cls-pick{color:#A2621F;}
   .class-block.last-lesson .cls-text{background:#F6E6CC;}
@@ -182,6 +186,7 @@
     .period-badge{font-size:12px;width:40px;}
     .period-pick{font-size:12px;width:56px;}
     .reason-select,.bulk-select{font-size:12px;max-width:110px;padding:3px;}
+    .end-toggle{font-size:11px;line-height:18px;padding:0 8px;opacity:.6;}
     .cls-text{font-size:14px;padding:6px;}
     .slot-select{font-size:14px;padding:5px;}
     .class-rows{gap:8px;}
@@ -238,7 +243,7 @@
 
   <div class="footnote">
     반 이름을 클릭하면 그날만 다른 반으로 바꿀 수 있습니다 (수업 교체). "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
-    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 그 분기 진도의 마지막 차시는 주황색으로, 진도를 다 쓴 뒤 자습 시간은 회색으로 표시됩니다.
+    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
   </div>
 </div>
 
@@ -511,7 +516,7 @@
     assess:JSON.parse(JSON.stringify(DEFAULT_ASSESS)),
     slots:JSON.parse(JSON.stringify(DEFAULT_SLOTS)),
     events:buildDefaultEvents(),
-    skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
+    skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, endMarks:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
     monthData:{}, weekly:{}
   };
   let activeCurrClass=null, activeTerm='t2', saveTimer=null, wkTimer=null, evMonth=null;
@@ -557,7 +562,7 @@
       quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark};
   }
   function eventsObj(){ return {events:state.events,assess:state.assess,dayTT:state.dayTT}; }
-  function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots}; }
+  function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks}; }
 
   const timers={};
   function saveIt(key,getter){
@@ -611,6 +616,7 @@
       if(M.picks) state.picks=M.picks;
       if(M.swaps) state.swaps=M.swaps;
       if(M.dateSlots) state.dateSlots=M.dateSlots;
+      if(M.endMarks) state.endMarks=M.endMarks;
     }
 
     // --- 이전 버전 데이터 보정 ---
@@ -723,7 +729,7 @@
 
   function simulateUpTo(endDateStr){
     const result={};
-    let counters={}, curTerm=null;
+    let counters={}, curTerm=null, manualEnded={};
     const ts=sortedTerms();
     if(!ts.length) return result;
     let d=new Date(ts[0].start+'T00:00:00');
@@ -733,7 +739,7 @@
     while(d<=end && g++<2000){
       const ds=fmtDate(d);
       const t=termOf(ds);
-      if(t && (!curTerm || t.id!==curTerm.id)){ curTerm=t; counters={}; }
+      if(t && (!curTerm || t.id!==curTerm.id)){ curTerm=t; counters={}; manualEnded={}; }
       const forcedWd=state.dayTT[ds];
       const wdName=forcedWd||WD_KEYS[d.getDay()];
       if(WD_LABELS[wdName] && !HOLIDAYS[ds]){
@@ -759,9 +765,13 @@
             const anyMark=list.some(x=>/\*\s*$/.test(x||''));
             const auto=rawLine.replace(/\s*\*\s*$/,'');
             const over=counters[className]>list.length;
-            const last=marked||(!anyMark && list.length>0 && counters[className]===list.length);
-            let afterEnd=false;
-            if(anyMark){
+            const manualEnd=!!state.endMarks[key];
+            let last=marked||(!anyMark && list.length>0 && counters[className]===list.length);
+            const wasEnded=!!manualEnded[className];
+            if(manualEnd){ manualEnded[className]=true; last=true; }
+            else if(wasEnded) last=false;
+            let afterEnd=wasEnded;
+            if(!afterEnd && anyMark){
               let endIdx=-1;
               list.forEach((x,i)=>{ if(/\*\s*$/.test(x||'')) endIdx=i; });
               afterEnd=(counters[className]-1)>endIdx;
@@ -876,6 +886,7 @@
           ${periodCtl}
           ${classSelectHTML(dk,p,a.className,a.swapped)}
           ${a.reason?`<span class="seq-badge">${esc(a.reason)}</span>`:''}
+          ${a.reason?'':`<button class="end-toggle ${a.last?'on':''}" title="이 반의 진도 마지막 차시로 표시" data-role="end-mark" data-key="${escAttr(key)}">끝</button>`}
           ${reasonSelectHTML(key,a.reason,dayReason)}
           ${a.isExtra?`<button class="del" data-role="extra-class-del" data-key="${dk}|${p}">×</button>`:''}
         </div>
@@ -977,6 +988,11 @@
       saveMarks(); render();
     }
     else if(role==='extra-class-del'){ delete state.swaps[el.dataset.key]; saveMarks(); render(); }
+    else if(role==='end-mark'){
+      const k=el.dataset.key;
+      if(state.endMarks[k]) delete state.endMarks[k]; else state.endMarks[k]=true;
+      saveMarks(); render();
+    }
     else if(role==='extra-del'){ ensureDay(+el.dataset.day).extra.splice(+el.dataset.idx,1); scheduleMonthSave(); render(); }
     else if(role==='wk-add'){ ensureWeek(el.dataset.wk).push({text:'',done:false}); saveWeekly(); render(); }
     else if(role==='wk-del'){ ensureWeek(el.dataset.wk).splice(+el.dataset.idx,1); saveWeekly(); render(); }
@@ -1152,6 +1168,7 @@
       .day-cell{background:#fff;padding:3px 4px;height:var(--cellH);overflow:hidden;font-size:${base}px;line-height:1.3;}
       .day-cell.other-month{background:#f5f5f5;}
       .day-cell.is-past{background:#fff;}
+      .end-toggle{display:none;}
       .day-num{font-size:${base+4}px;font-weight:700;}
       .day-num::after{content:''!important;}
       .wd-label{display:none;}
