@@ -74,6 +74,18 @@
   .task-item input[type=text]{border:none;background:transparent;font-size:12px;flex:1;min-width:0;padding:1px 0;font-family:inherit;color:var(--ink);}
   .task-item input[type=text]:focus{outline:none;background:#FBF8EF;}
   .task-item.done input[type=text]{text-decoration:line-through;color:var(--ink-30);}
+  .hl-btn{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:10px;padding:0 2px;flex:none;opacity:.4;}
+  .hl-btn:hover{opacity:1;color:#C8863C;}
+  .task-item.hl-yellow input[type=text]{background:#FFF3A8;}
+  .task-item.hl-pink   input[type=text]{background:#FFD6E4;}
+  .task-item.hl-blue   input[type=text]{background:#CFE6FA;}
+  .task-item.hl-green  input[type=text]{background:#D2F0D2;}
+  .task-item[class*="hl-"]:not(.hl-none) input[type=text]{border-radius:3px;padding:1px 4px;font-weight:600;}
+  /* 주간 목표는 크고 또렷하게 */
+  .wk-title{font-size:12px;}
+  .task-item.wk-item input[type=text]{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.45;}
+  .task-item.wk-item input[type=checkbox]{width:15px;height:15px;}
+  .task-item.wk-item.ghost input[type=text]{font-weight:400;}
   .task-item.ghost input[type=checkbox]{opacity:.35;}
   .task-item.ghost input[type=text]::placeholder{color:var(--ink-30);font-style:italic;}
   .del{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:12px;padding:0 2px;flex:none;}
@@ -179,6 +191,8 @@
     .event-line{font-size:12px;}
     .assess-line{font-size:12px;}
     .task-item input[type=text]{font-size:15px;padding:4px 0;}
+    .task-item.wk-item input[type=text]{font-size:16px;}
+    .hl-btn{font-size:14px;opacity:.6;padding:0 6px;}
     .task-item input[type=checkbox]{width:17px;height:17px;}
     .section-label{font-size:11px;margin:8px 0 4px;}
     .add-mini{font-size:13px;}
@@ -243,7 +257,7 @@
 
   <div class="footnote">
     반 이름을 클릭하면 그날만 다른 반으로 바꿀 수 있습니다 (수업 교체). "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
-    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
+    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 업무·주간 목표 항목의 ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
   </div>
 </div>
 
@@ -814,12 +828,13 @@
     const fri=new Date(sunDate); fri.setDate(fri.getDate()+5);
     const range=`${mon.getMonth()+1}.${mon.getDate()} – ${fri.getMonth()+1}.${fri.getDate()}`;
     const list=items.map((t,i)=>`
-      <div class="task-item ${t.done?'done':''}">
+      <div class="task-item wk-item ${t.done?'done':''} hl-${t.hl||'none'}">
         <input type="checkbox" data-role="wk-done" data-wk="${wk}" data-idx="${i}" ${t.done?'checked':''}>
         <input type="text" data-role="wk-text" data-wk="${wk}" data-idx="${i}" value="${escAttr(t.text)}" placeholder="이번 주 할 일">
+        <button class="hl-btn" title="형광펜" data-role="wk-hl" data-wk="${wk}" data-idx="${i}">✦</button>
         <button class="del" data-role="wk-del" data-wk="${wk}" data-idx="${i}">×</button>
       </div>`).join('');
-    const ghost=`<div class="task-item ghost">
+    const ghost=`<div class="task-item wk-item ghost">
         <input type="checkbox" disabled>
         <input type="text" data-role="wk-new" data-wk="${wk}" placeholder="이번 주 할 일">
       </div>`;
@@ -867,9 +882,10 @@
     const data=ensureDay(dayNum), dayKey=pad2(dayNum);
     const dayReason=dayReasonOf(dk);
     const tasksHTML=data.tasks.map((t,i)=>`
-      <div class="task-item ${t.done?'done':''}">
+      <div class="task-item ${t.done?'done':''} hl-${t.hl||'none'}">
         <input type="checkbox" data-role="task-done" data-day="${dayKey}" data-idx="${i}" ${t.done?'checked':''}>
         <input type="text" data-role="task-text" data-day="${dayKey}" data-idx="${i}" value="${escAttr(t.text)}" placeholder="업무">
+        <button class="hl-btn" title="형광펜" data-role="task-hl" data-day="${dayKey}" data-idx="${i}">✦</button>
         <button class="del" data-role="task-del" data-day="${dayKey}" data-idx="${i}">×</button>
       </div>`).join('');
 
@@ -994,6 +1010,18 @@
       saveMarks(); render();
     }
     else if(role==='extra-del'){ ensureDay(+el.dataset.day).extra.splice(+el.dataset.idx,1); scheduleMonthSave(); render(); }
+    else if(role==='task-hl'){
+      const HLS=['','yellow','pink','blue','green'];
+      const t=ensureDay(+el.dataset.day).tasks[+el.dataset.idx];
+      t.hl=HLS[(HLS.indexOf(t.hl||'')+1)%HLS.length]||'';
+      scheduleMonthSave(); render();
+    }
+    else if(role==='wk-hl'){
+      const HLS=['','yellow','pink','blue','green'];
+      const t=ensureWeek(el.dataset.wk)[+el.dataset.idx];
+      t.hl=HLS[(HLS.indexOf(t.hl||'')+1)%HLS.length]||'';
+      saveWeekly(); render();
+    }
     else if(role==='wk-add'){ ensureWeek(el.dataset.wk).push({text:'',done:false}); saveWeekly(); render(); }
     else if(role==='wk-del'){ ensureWeek(el.dataset.wk).splice(+el.dataset.idx,1); saveWeekly(); render(); }
   });
@@ -1180,6 +1208,11 @@
       .task-item{display:flex;gap:3px;align-items:flex-start;}
       .p-box{display:inline-block;width:${base-1}px;height:${base-1}px;border:1px solid #888;font-size:${base-2.5}px;line-height:${base-1}px;text-align:center;flex:none;margin-top:2px;}
       .task-item.done{color:#999;text-decoration:line-through;}
+      .task-item.hl-yellow .p-txt,.task-item.hl-yellow span:not(.p-box){background:#FFF3A8;}
+      .task-item.hl-pink   .p-txt,.task-item.hl-pink span:not(.p-box){background:#FFD6E4;}
+      .task-item.hl-blue   .p-txt,.task-item.hl-blue span:not(.p-box){background:#CFE6FA;}
+      .task-item.hl-green  .p-txt,.task-item.hl-green span:not(.p-box){background:#D2F0D2;}
+      .task-item.wk-item span:not(.p-box){font-weight:700;}
       .class-block{display:flex;flex-wrap:wrap;gap:3px;align-items:baseline;border-left:2px solid #cfe0d4;padding-left:3px;margin-bottom:2px;}
       .class-block.skipped{border-left-color:#ccc;color:#888;}
       .class-block.last-lesson{border-left-color:#C8863C;}
