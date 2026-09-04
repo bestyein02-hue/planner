@@ -75,13 +75,9 @@
   .task-item input[type=text],.task-item textarea{border:none;background:transparent;font-size:12px;flex:1;min-width:0;padding:1px 0;font-family:inherit;color:var(--ink);resize:none;overflow:hidden;line-height:1.45;}
   .task-item input[type=text]:focus,.task-item textarea:focus{outline:none;background:#FBF8EF;}
   .task-item.done input[type=text],.task-item.done textarea{text-decoration:line-through;color:var(--ink-30);}
-  .hl-btn{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:10px;padding:0 2px;flex:none;opacity:.4;}
-  .hl-btn:hover{opacity:1;color:#C8863C;}
-  .task-item.hl-yellow input[type=text],.task-item.hl-yellow textarea{background:#FFF3A8;}
-  .task-item.hl-pink input[type=text],.task-item.hl-pink textarea{background:#FFD6E4;}
-  .task-item.hl-blue input[type=text],.task-item.hl-blue textarea{background:#CFE6FA;}
-  .task-item.hl-green input[type=text],.task-item.hl-green textarea{background:#D2F0D2;}
-  .task-item[class*="hl-"]:not(.hl-none) input[type=text],.task-item[class*="hl-"]:not(.hl-none) textarea{border-radius:3px;padding:1px 4px;font-weight:600;}
+  .hl-btn{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:11px;padding:0 2px;flex:none;opacity:.55;}
+  .hl-btn:hover{opacity:1;}
+  .hl-btn[style*='background']{opacity:1;}
   /* 주간 목표는 크고 또렷하게 */
   .wk-title{font-size:12px;}
   .task-item.wk-item input[type=text],.task-item.wk-item textarea{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.45;}
@@ -370,6 +366,9 @@
     "2027-10-03":"개천절","2027-10-04":"대체공휴일","2027-10-09":"한글날","2027-10-11":"대체공휴일",
     "2027-12-25":"크리스마스","2027-12-27":"대체공휴일"
   };
+  const HL_ORDER=['','yellow','pink','blue','green'];
+  const HL_COLORS={yellow:'#FFF3A8',pink:'#FFC7DC',blue:'#BFDDF7',green:'#C6EEC6'};
+  const hlStyle=v=>HL_COLORS[v]?`background:${HL_COLORS[v]};border-radius:3px;padding:1px 4px;font-weight:600;`:'';
   const REASONS=["수행평가","학교행사","모의고사","지필평가","방학/휴업","연가/조퇴/출장","자습","기타"];
   const WD_KEYS=['sun','mon','tue','wed','thu','fri','sat'];
   const WD_LABELS={mon:'월',tue:'화',wed:'수',thu:'목',fri:'금'};
@@ -831,8 +830,8 @@
     const list=items.map((t,i)=>`
       <div class="task-item wk-item ${t.done?'done':''} hl-${t.hl||'none'}">
         <input type="checkbox" data-role="wk-done" data-wk="${wk}" data-idx="${i}" ${t.done?'checked':''}>
-        <textarea rows="1" class="grow" data-role="wk-text" data-wk="${wk}" data-idx="${i}" placeholder="이번 주 할 일">${esc(t.text)}</textarea>
-        <button class="hl-btn" title="형광펜" data-role="wk-hl" data-wk="${wk}" data-idx="${i}">✦</button>
+        <textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="wk-text" data-wk="${wk}" data-idx="${i}" placeholder="이번 주 할 일">${esc(t.text)}</textarea>
+        <button class="hl-btn" title="형광펜" style="color:${HL_COLORS[t.hl]||''}" data-role="wk-hl" data-wk="${wk}" data-idx="${i}">✦</button>
         <button class="del" data-role="wk-del" data-wk="${wk}" data-idx="${i}">×</button>
       </div>`).join('');
     const ghost=`<div class="task-item wk-item ghost">
@@ -885,8 +884,8 @@
     const tasksHTML=data.tasks.map((t,i)=>`
       <div class="task-item ${t.done?'done':''} hl-${t.hl||'none'}">
         <input type="checkbox" data-role="task-done" data-day="${dayKey}" data-idx="${i}" ${t.done?'checked':''}>
-        <textarea rows="1" class="grow" data-role="task-text" data-day="${dayKey}" data-idx="${i}" placeholder="업무">${esc(t.text)}</textarea>
-        <button class="hl-btn" title="형광펜" data-role="task-hl" data-day="${dayKey}" data-idx="${i}">✦</button>
+        <textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="task-text" data-day="${dayKey}" data-idx="${i}" placeholder="업무">${esc(t.text)}</textarea>
+        <button class="hl-btn" title="형광펜" style="color:${HL_COLORS[t.hl]||''}" data-role="task-hl" data-day="${dayKey}" data-idx="${i}">✦</button>
         <button class="del" data-role="task-del" data-day="${dayKey}" data-idx="${i}">×</button>
       </div>`).join('');
 
@@ -1023,13 +1022,13 @@
     }
     else if(role==='extra-del'){ ensureDay(+el.dataset.day).extra.splice(+el.dataset.idx,1); scheduleMonthSave(); render(); }
     else if(role==='task-hl'){
-      const HLS=['','yellow','pink','blue','green'];
+      const HLS=HL_ORDER;
       const t=ensureDay(+el.dataset.day).tasks[+el.dataset.idx];
       t.hl=HLS[(HLS.indexOf(t.hl||'')+1)%HLS.length]||'';
       scheduleMonthSave(); render();
     }
     else if(role==='wk-hl'){
-      const HLS=['','yellow','pink','blue','green'];
+      const HLS=HL_ORDER;
       const t=ensureWeek(el.dataset.wk)[+el.dataset.idx];
       t.hl=HLS[(HLS.indexOf(t.hl||'')+1)%HLS.length]||'';
       saveWeekly(); render();
@@ -1160,6 +1159,8 @@
       } else { v=el.value||''; }
       const sp=document.createElement('span');
       sp.className='p-'+(el.className.split(' ')[0]||'txt');
+      const bg=el.style&&el.style.background;
+      if(bg) sp.setAttribute('style','background:'+bg+';border-radius:2px;padding:0 2px;font-weight:700;');
       sp.textContent=v;
       el.parentNode.replaceChild(sp,el);
     });
@@ -1222,7 +1223,6 @@
       .task-item span:not(.p-box){white-space:pre-wrap;word-break:break-word;}
       .p-box{display:inline-block;width:${base-1}px;height:${base-1}px;border:1px solid #888;font-size:${base-2.5}px;line-height:${base-1}px;text-align:center;flex:none;margin-top:2px;}
       .task-item.done{color:#999;text-decoration:line-through;}
-      .task-item.hl-yellow .p-txt,.task-item.hl-yellow span:not(.p-box){background:#FFF3A8;}
       .task-item.hl-pink   .p-txt,.task-item.hl-pink span:not(.p-box){background:#FFD6E4;}
       .task-item.hl-blue   .p-txt,.task-item.hl-blue span:not(.p-box){background:#CFE6FA;}
       .task-item.hl-green  .p-txt,.task-item.hl-green span:not(.p-box){background:#D2F0D2;}
