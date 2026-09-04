@@ -69,25 +69,26 @@
   .bulk-select{font-size:10px;border:1px solid var(--ink-10);border-radius:3px;background:var(--card);color:var(--ink-30);padding:1px 2px;font-family:inherit;max-width:72px;}
 
   .task-list{display:flex;flex-direction:column;gap:2px;}
-  .task-item{display:flex;align-items:center;gap:5px;}
+  .task-item{display:flex;align-items:flex-start;gap:5px;}
+  .task-item input[type=checkbox]{margin-top:2px;}
   .task-item input[type=checkbox]{width:13px;height:13px;flex:none;accent-color:var(--class-accent);}
-  .task-item input[type=text]{border:none;background:transparent;font-size:12px;flex:1;min-width:0;padding:1px 0;font-family:inherit;color:var(--ink);}
-  .task-item input[type=text]:focus{outline:none;background:#FBF8EF;}
-  .task-item.done input[type=text]{text-decoration:line-through;color:var(--ink-30);}
+  .task-item input[type=text],.task-item textarea{border:none;background:transparent;font-size:12px;flex:1;min-width:0;padding:1px 0;font-family:inherit;color:var(--ink);resize:none;overflow:hidden;line-height:1.45;}
+  .task-item input[type=text]:focus,.task-item textarea:focus{outline:none;background:#FBF8EF;}
+  .task-item.done input[type=text],.task-item.done textarea{text-decoration:line-through;color:var(--ink-30);}
   .hl-btn{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:10px;padding:0 2px;flex:none;opacity:.4;}
   .hl-btn:hover{opacity:1;color:#C8863C;}
-  .task-item.hl-yellow input[type=text]{background:#FFF3A8;}
+  .task-item.hl-yellow input[type=text],.task-item.hl-yellow textarea{background:#FFF3A8;}
   .task-item.hl-pink   input[type=text]{background:#FFD6E4;}
   .task-item.hl-blue   input[type=text]{background:#CFE6FA;}
   .task-item.hl-green  input[type=text]{background:#D2F0D2;}
-  .task-item[class*="hl-"]:not(.hl-none) input[type=text]{border-radius:3px;padding:1px 4px;font-weight:600;}
+  .task-item[class*="hl-"]:not(.hl-none) input[type=text],.task-item[class*="hl-"]:not(.hl-none) textarea{border-radius:3px;padding:1px 4px;font-weight:600;}
   /* 주간 목표는 크고 또렷하게 */
   .wk-title{font-size:12px;}
-  .task-item.wk-item input[type=text]{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.45;}
+  .task-item.wk-item input[type=text],.task-item.wk-item textarea{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.45;}
   .task-item.wk-item input[type=checkbox]{width:15px;height:15px;}
-  .task-item.wk-item.ghost input[type=text]{font-weight:400;}
+  .task-item.wk-item.ghost input[type=text],.task-item.wk-item.ghost textarea{font-weight:400;}
   .task-item.ghost input[type=checkbox]{opacity:.35;}
-  .task-item.ghost input[type=text]::placeholder{color:var(--ink-30);font-style:italic;}
+  .task-item.ghost input[type=text]::placeholder,.task-item.ghost textarea::placeholder{color:var(--ink-30);font-style:italic;}
   .del{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:12px;padding:0 2px;flex:none;}
   .del:hover{color:var(--holiday);}
   .divider{border:none;border-top:1px solid var(--ink-10);margin:5px 0;}
@@ -190,8 +191,8 @@
     .holiday-name{font-size:12px;}
     .event-line{font-size:12px;}
     .assess-line{font-size:12px;}
-    .task-item input[type=text]{font-size:15px;padding:4px 0;}
-    .task-item.wk-item input[type=text]{font-size:16px;}
+    .task-item input[type=text],.task-item textarea{font-size:15px;padding:4px 0;}
+    .task-item.wk-item input[type=text],.task-item.wk-item textarea{font-size:16px;}
     .hl-btn{font-size:14px;opacity:.6;padding:0 6px;}
     .task-item input[type=checkbox]{width:17px;height:17px;}
     .section-label{font-size:11px;margin:8px 0 4px;}
@@ -830,13 +831,13 @@
     const list=items.map((t,i)=>`
       <div class="task-item wk-item ${t.done?'done':''} hl-${t.hl||'none'}">
         <input type="checkbox" data-role="wk-done" data-wk="${wk}" data-idx="${i}" ${t.done?'checked':''}>
-        <input type="text" data-role="wk-text" data-wk="${wk}" data-idx="${i}" value="${escAttr(t.text)}" placeholder="이번 주 할 일">
+        <textarea rows="1" class="grow" data-role="wk-text" data-wk="${wk}" data-idx="${i}" placeholder="이번 주 할 일">${esc(t.text)}</textarea>
         <button class="hl-btn" title="형광펜" data-role="wk-hl" data-wk="${wk}" data-idx="${i}">✦</button>
         <button class="del" data-role="wk-del" data-wk="${wk}" data-idx="${i}">×</button>
       </div>`).join('');
     const ghost=`<div class="task-item wk-item ghost">
         <input type="checkbox" disabled>
-        <input type="text" data-role="wk-new" data-wk="${wk}" placeholder="이번 주 할 일">
+        <textarea rows="1" class="grow" data-role="wk-new" data-wk="${wk}" placeholder="이번 주 할 일"></textarea>
       </div>`;
     return `<div class="wk-title">주간 목표</div><div class="wk-range">${range}</div>
       <div class="section-label"><span></span><button class="add-mini" data-role="wk-add" data-wk="${wk}">+ 추가</button></div>
@@ -884,7 +885,7 @@
     const tasksHTML=data.tasks.map((t,i)=>`
       <div class="task-item ${t.done?'done':''} hl-${t.hl||'none'}">
         <input type="checkbox" data-role="task-done" data-day="${dayKey}" data-idx="${i}" ${t.done?'checked':''}>
-        <input type="text" data-role="task-text" data-day="${dayKey}" data-idx="${i}" value="${escAttr(t.text)}" placeholder="업무">
+        <textarea rows="1" class="grow" data-role="task-text" data-day="${dayKey}" data-idx="${i}" placeholder="업무">${esc(t.text)}</textarea>
         <button class="hl-btn" title="형광펜" data-role="task-hl" data-day="${dayKey}" data-idx="${i}">✦</button>
         <button class="del" data-role="task-del" data-day="${dayKey}" data-idx="${i}">×</button>
       </div>`).join('');
@@ -963,6 +964,16 @@
     </div>`;
   }
 
+  function autoGrow(el){
+    if(!el) return;
+    el.style.height='auto';
+    el.style.height=(el.scrollHeight||16)+'px';
+  }
+  function growAll(){
+    const list=document.querySelectorAll('textarea.grow');
+    if(list&&list.forEach) list.forEach(autoGrow);
+  }
+
   async function render(){
     document.getElementById('monthTitle').textContent=`${state.year}년 ${state.month+1}월`;
     document.getElementById('subtitleInput').value=state.subtitle;
@@ -987,6 +998,7 @@
     let html='';
     cells.forEach(c=>{ html+=buildCell(c.y,c.m,c.d,c.cur,c.cur?assign:{}); });
     document.getElementById('calendarGrid').innerHTML=html;
+    growAll();
   }
 
   const grid=document.getElementById('calendarGrid');
@@ -1086,7 +1098,7 @@
   grid.addEventListener('input',e=>{
     const el=e.target, role=el.dataset.role;
     if(!role) return;
-    if(role==='task-text'){ ensureDay(+el.dataset.day).tasks[+el.dataset.idx].text=el.value; scheduleMonthSave(); }
+    if(role==='task-text'){ autoGrow(el); ensureDay(+el.dataset.day).tasks[+el.dataset.idx].text=el.value; scheduleMonthSave(); }
     else if(role==='extra-label'){ ensureDay(+el.dataset.day).extra[+el.dataset.idx].label=el.value; scheduleMonthSave(); }
     else if(role==='extra-text'){ ensureDay(+el.dataset.day).extra[+el.dataset.idx].text=el.value; scheduleMonthSave(); }
     else if(role==='override'){ state.overrides[el.dataset.key]=el.value; saveMarks(); }
@@ -1107,6 +1119,7 @@
       });
     }
     else if(role==='wk-text'){
+      autoGrow(el);
       ensureWeek(el.dataset.wk)[+el.dataset.idx].text=el.value;
       markSaving(); clearTimeout(wkTimer);
       wkTimer=setTimeout(()=>queueWrite('weekly',()=>state.weekly),500);
@@ -1206,6 +1219,7 @@
       .section-label{font-size:${base-1.4}px;color:#aaa;letter-spacing:.5px;margin:2px 0 0;}
       .divider{border:none;border-top:1px solid #e0e0e0;margin:2px 0;}
       .task-item{display:flex;gap:3px;align-items:flex-start;}
+      .task-item span:not(.p-box){white-space:pre-wrap;word-break:break-word;}
       .p-box{display:inline-block;width:${base-1}px;height:${base-1}px;border:1px solid #888;font-size:${base-2.5}px;line-height:${base-1}px;text-align:center;flex:none;margin-top:2px;}
       .task-item.done{color:#999;text-decoration:line-through;}
       .task-item.hl-yellow .p-txt,.task-item.hl-yellow span:not(.p-box){background:#FFF3A8;}
