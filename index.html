@@ -34,6 +34,7 @@
   .subtitle-input:focus{outline:none;border-bottom-color:var(--ink);}
   .head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .btn{border:1px solid var(--ink);background:var(--card);padding:6px 14px;font-size:13px;border-radius:4px;cursor:pointer;color:var(--ink);}
+  .btn .ic{display:none;}
   .btn:hover{background:var(--ink);color:var(--card);}
   .save-flag{font-size:12px;color:var(--ink-30);min-width:56px;text-align:right;}
   .store-badge{font-size:10.5px;padding:3px 8px;border-radius:10px;border:1px solid var(--ink-10);color:var(--ink-30);}
@@ -219,9 +220,14 @@
     .head-left{gap:8px;width:100%;}
     .month-title{font-size:26px;}
     .subtitle-input{width:100%;order:5;}
-    .head-right{width:100%;gap:6px;}
-    .btn{padding:6px 10px;font-size:12px;flex:1;min-width:0;}
-    .save-flag{min-width:auto;flex:none;}
+    .head-right{width:100%;gap:6px;justify-content:flex-start;align-items:center;}
+    .btn{padding:0;font-size:17px;flex:none;width:38px;height:34px;line-height:1;
+         display:flex;align-items:center;justify-content:center;}
+    .btn .lb{display:none;}
+    .btn .ic{display:inline;}
+    #printMode{width:auto;flex:1;min-width:0;font-size:12px;height:34px;padding:0 6px;}
+    .save-flag{min-width:auto;flex:none;font-size:11px;}
+    .store-badge{font-size:10px;padding:2px 6px;}
     .weekday-row{display:none;}
     .grid-scroll{overflow-x:visible;}
     .calendar-grid{display:block;min-width:0;border:none;background:transparent;}
@@ -284,17 +290,17 @@
         <button class="vbtn active" id="viewMonth">월</button>
         <button class="vbtn" id="viewWeek">주</button>
       </div>
-      <button class="btn" id="settingsBtn">설정</button>
-      <button class="btn" id="todayBtn">오늘</button>
-      <button class="btn" id="exportBtn">백업 저장</button>
-      <button class="btn" id="importBtn">백업 불러오기</button>
+      <button class="btn" id="settingsBtn" title="설정"><span class="ic">⚙</span><span class="lb">설정</span></button>
+      <button class="btn" id="todayBtn" title="오늘"><span class="ic">◉</span><span class="lb">오늘</span></button>
+      <button class="btn" id="exportBtn" title="백업 저장"><span class="ic">⭳</span><span class="lb">백업 저장</span></button>
+      <button class="btn" id="importBtn" title="백업 불러오기"><span class="ic">⭱</span><span class="lb">백업 불러오기</span></button>
       <input type="file" id="importFile" accept="application/json,.json" style="display:none">
       <select class="btn" id="printMode" title="인쇄 분량" style="padding:6px 8px">
         <option value="0">한 장에 한 달</option>
         <option value="3" selected>3주씩 (2장)</option>
         <option value="2">2주씩 (3장)</option>
       </select>
-      <button class="btn" id="printBtn">인쇄용 파일</button>
+      <button class="btn" id="printBtn" title="인쇄용 파일"><span class="ic">🖶</span><span class="lb">인쇄용 파일</span></button>
       <span class="store-badge" id="storeBadge" title="저장 위치"></span>
       <span class="save-flag" id="saveFlag"></span>
     </div>
