@@ -37,6 +37,10 @@
   .btn:hover{background:var(--ink);color:var(--card);}
   .save-flag{font-size:12px;color:var(--ink-30);min-width:56px;text-align:right;}
 
+  .viewswitch{display:flex;border:1px solid var(--ink);border-radius:4px;overflow:hidden;}
+  .vbtn{border:none;background:var(--card);color:var(--ink);font-size:13px;padding:6px 13px;cursor:pointer;font-family:inherit;}
+  .vbtn+.vbtn{border-left:1px solid var(--ink);}
+  .vbtn.active{background:var(--ink);color:var(--card);font-weight:600;}
   .weekday-row{display:grid;grid-template-columns:var(--cols);margin-bottom:1px;min-width:1340px;}
   .weekday-row .wd{text-align:center;font-size:13px;font-weight:600;padding:8px 0;color:var(--ink-60);}
   .weekday-row .wd.sun{color:var(--holiday);} .weekday-row .wd.sat{color:var(--sat);}
@@ -44,6 +48,29 @@
   .calendar-grid{display:grid;grid-template-columns:var(--cols);gap:1px;background:var(--ink-10);border:1px solid var(--ink-10);min-width:1340px;}
 
   .day-cell{background:var(--card);min-height:260px;display:flex;flex-direction:column;padding:8px;}
+  /* 주 단위 보기 — 한 주만 크게 */
+  .calendar-grid.week-view{min-width:0;}
+  .weekday-row.week-view{min-width:0;}
+  .calendar-grid.week-view .day-cell{min-height:min(66vh,640px);padding:12px 14px;}
+  .calendar-grid.week-view .day-num{font-size:26px;}
+  .calendar-grid.week-view .event-line,
+  .calendar-grid.week-view .assess-line{font-size:12px;}
+  .calendar-grid.week-view .section-label{font-size:11px;margin:8px 0 3px;}
+  .calendar-grid.week-view .add-mini{font-size:12px;}
+  .calendar-grid.week-view .task-item input[type=text],
+  .calendar-grid.week-view .task-item textarea{font-size:14px;}
+  .calendar-grid.week-view .task-item.wk-item textarea{font-size:15px;}
+  .calendar-grid.week-view .task-item input[type=checkbox]{width:16px;height:16px;}
+  .calendar-grid.week-view .cls-pick{font-size:18px;width:56px;}
+  .calendar-grid.week-view .period-badge{font-size:12px;width:38px;}
+  .calendar-grid.week-view .cls-text{font-size:13.5px;padding:5px 7px;}
+  .calendar-grid.week-view .reason-select{font-size:11px;max-width:92px;}
+  .calendar-grid.week-view .end-toggle{font-size:11px;line-height:17px;padding:0 7px;}
+  .calendar-grid.week-view .done-chk{width:15px;height:15px;}
+  .calendar-grid.week-view .class-rows{gap:7px;}
+  .calendar-grid.week-view .slot-select{font-size:13px;}
+  .calendar-grid.week-view .wk-title{font-size:14px;}
+  .calendar-grid.week-view .wk-range{font-size:12px;}
   .day-cell.other-month{background:var(--card-dim);}
   .day-cell.other-month .day-num{color:var(--ink-30);}
   .day-cell.sunday{background:#F7F4EC;}
@@ -193,6 +220,9 @@
     .grid-scroll{overflow-x:visible;}
     .calendar-grid{display:block;min-width:0;border:none;background:transparent;}
     .day-cell{min-height:0;margin-bottom:8px;border:1px solid var(--ink-10);border-radius:6px;padding:10px 12px;}
+    .calendar-grid.week-view .day-cell{min-height:0;padding:10px 12px;}
+    .viewswitch{flex:none;}
+    .vbtn{padding:6px 14px;font-size:12px;}
     .day-cell.other-month{display:none;}
     .wd-label{display:inline;font-size:13px;font-weight:600;margin-left:5px;color:var(--ink-60);font-family:-apple-system,BlinkMacSystemFont,sans-serif;}
     .day-num.sun .wd-label,.day-num.sat .wd-label{color:inherit;}
@@ -244,6 +274,10 @@
       <input class="subtitle-input" id="subtitleInput" placeholder="다이어리 제목">
     </div>
     <div class="head-right">
+      <div class="viewswitch">
+        <button class="vbtn active" id="viewMonth">월</button>
+        <button class="vbtn" id="viewWeek">주</button>
+      </div>
       <button class="btn" id="settingsBtn">설정</button>
       <button class="btn" id="todayBtn">오늘</button>
       <button class="btn" id="exportBtn">백업 저장</button>
@@ -268,7 +302,7 @@
 
   <div class="footnote">
     반 이름을 클릭하면 그날만 다른 반으로 바꿀 수 있습니다 (수업 교체). "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
-    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 수업 왼쪽 체크박스로 진행한 수업을 표시하면 취소선이 그어지고 아래로 내려갑니다. 업무·주간 목표도 완료하면 아래로 내려가요. ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
+    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 수업 왼쪽 체크박스로 진행한 수업을 표시하면 취소선이 그어지고 아래로 내려갑니다. 업무·주간 목표도 완료하면 아래로 내려가요. ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 오른쪽 위 "월 / 주" 버튼으로 한 달 전체 보기와 한 주만 크게 보기를 오갈 수 있습니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
   </div>
 </div>
 
@@ -545,7 +579,7 @@
     slots:JSON.parse(JSON.stringify(DEFAULT_SLOTS)),
     events:buildDefaultEvents(),
     skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, endMarks:{}, doneMarks:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
-    monthData:{}, weekly:{}
+    months:{}, weekly:{}, viewMode:'month', weekStart:null
   };
   let activeCurrClass=null, activeTerm='t2', saveTimer=null, wkTimer=null, evMonth=null;
   const saveFlag=document.getElementById('saveFlag');
@@ -587,7 +621,7 @@
   function baseObj(){
     return {subtitle:state.subtitle,periodsCount:state.periodsCount,
       timetable:state.timetable,terms:state.terms,slots:state.slots,
-      quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark};
+      quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark,viewMode:state.viewMode};
   }
   function eventsObj(){ return {events:state.events,assess:state.assess,dayTT:state.dayTT}; }
   function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks,doneMarks:state.doneMarks}; }
@@ -624,6 +658,7 @@
       state.quarterSplit=!!B.quarterSplit;
       state.gymAuto=!!B.gymAuto;
       state.progMark=!!B.progMark;
+      if(B.viewMode) state.viewMode=B.viewMode;
     }
     const C=curr||cfg.curriculum;
     if(C){
@@ -688,20 +723,38 @@
   }
 
   const loadMonth=(y,m)=>getJSON(monthKey(y,m),{});
-  let loadedKey=null;
-  function ensureDay(n){
-    const k=pad2(n);
-    if(!state.monthData[k]) state.monthData[k]={tasks:[],extra:[]};
-    if(!state.monthData[k].tasks) state.monthData[k].tasks=[];
-    if(!state.monthData[k].extra) state.monthData[k].extra=[];
-    return state.monthData[k];
+  const loadedMonths={};
+  const dirtyMonths={};
+
+  async function ensureMonthLoaded(mk){
+    if(loadedMonths[mk]) return;
+    if(!state.months[mk]) state.months[mk]=await getJSON(mk,{});
+    loadedMonths[mk]=true;
   }
-  function scheduleMonthSave(){ markSaving(); clearTimeout(saveTimer); saveTimer=setTimeout(flushMonthSave,500); }
+  function mkOf(ds){ const [y,m]=ds.split('-'); return `month:${y}-${m}`; }
+  function ensureDayD(ds){
+    const mk=mkOf(ds), dd=ds.split('-')[2];
+    if(!state.months[mk]) state.months[mk]={};
+    const M=state.months[mk];
+    if(!M[dd]) M[dd]={tasks:[],extra:[]};
+    if(!M[dd].tasks) M[dd].tasks=[];
+    if(!M[dd].extra) M[dd].extra=[];
+    return M[dd];
+  }
+  function scheduleMonthSave(ds){
+    markSaving();
+    if(ds) dirtyMonths[mkOf(ds)]=true;
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(flushMonthSave,500);
+  }
   function flushMonthSave(){
-    const key=monthKey(state.year,state.month);
-    const snap=JSON.parse(JSON.stringify(state.monthData));
-    queueWrite(key,()=>snap);
+    Object.keys(dirtyMonths).forEach(mk=>{
+      const snap=JSON.parse(JSON.stringify(state.months[mk]||{}));
+      queueWrite(mk,()=>snap);
+      delete dirtyMonths[mk];
+    });
   }
+
   function ensureWeek(wk){ if(!state.weekly[wk]) state.weekly[wk]=[]; return state.weekly[wk]; }
   const daysInMonth=(y,m)=>new Date(y,m+1,0).getDate();
   // 학사일정 문구 → 자동 배정 (요일·교시·키워드)
@@ -895,15 +948,15 @@
     }
     if(!inMonth) return `<div class="day-cell other-month"><div class="day-head"><div class="${numCls}">${dayNum}</div></div></div>`;
 
-    const data=ensureDay(dayNum), dayKey=pad2(dayNum);
+    const data=ensureDayD(dk), dayKey=dk;
     const dayReason=dayReasonOf(dk);
     const tasksOrder=data.tasks.map((t,i)=>({t,i})).sort((a,b)=>(a.t.done?1:0)-(b.t.done?1:0));
     const tasksHTML=tasksOrder.map(({t,i})=>`
       <div class="task-item ${t.done?'done':''} hl-${t.hl||'none'}">
-        <input type="checkbox" data-role="task-done" data-day="${dayKey}" data-idx="${i}" ${t.done?'checked':''}>
-        <textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="task-text" data-day="${dayKey}" data-idx="${i}" placeholder="업무">${esc(t.text)}</textarea>
-        <button class="hl-btn" title="형광펜" style="color:${HL_COLORS[t.hl]||''}" data-role="task-hl" data-day="${dayKey}" data-idx="${i}">✦</button>
-        <button class="del" data-role="task-del" data-day="${dayKey}" data-idx="${i}">×</button>
+        <input type="checkbox" data-role="task-done" data-date="${dayKey}" data-idx="${i}" ${t.done?'checked':''}>
+        <textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="task-text" data-date="${dayKey}" data-idx="${i}" placeholder="업무">${esc(t.text)}</textarea>
+        <button class="hl-btn" title="형광펜" style="color:${HL_COLORS[t.hl]||''}" data-role="task-hl" data-date="${dayKey}" data-idx="${i}">✦</button>
+        <button class="del" data-role="task-del" data-date="${dayKey}" data-idx="${i}">×</button>
       </div>`).join('');
 
     const dayAssign=assign[dk]||{};
@@ -964,21 +1017,21 @@
 
     const extraHTML=data.extra.map((c,i)=>`
       <div class="class-row extra-row">
-        <input type="text" class="e-label" data-role="extra-label" data-day="${dayKey}" data-idx="${i}" value="${escAttr(c.label)}" placeholder="반">
-        <input type="text" class="e-text" data-role="extra-text" data-day="${dayKey}" data-idx="${i}" value="${escAttr(c.text)}" placeholder="수업 내용">
-        <button class="del" data-role="extra-del" data-day="${dayKey}" data-idx="${i}">×</button>
+        <input type="text" class="e-label" data-role="extra-label" data-date="${dayKey}" data-idx="${i}" value="${escAttr(c.label)}" placeholder="반">
+        <input type="text" class="e-text" data-role="extra-text" data-date="${dayKey}" data-idx="${i}" value="${escAttr(c.text)}" placeholder="수업 내용">
+        <button class="del" data-role="extra-del" data-date="${dayKey}" data-idx="${i}">×</button>
       </div>`).join('');
 
     // 실제로 그날 수업이 하나도 남지 않았을 때만 회색 처리
     const noClass = periods.length>0
       ? periods.every(p=>!!dayAssign[p].reason)
       : !!dayReason;
-    return `<div class="day-cell ${noClass?'noclass':''} ${assess?'assess-day':''} ${dk<TODAY_STR?'is-past':''} ${dk===TODAY_STR?'is-today':''}" ${dk===TODAY_STR?'id="todayCell"':''} data-day="${dayKey}">
+    return `<div class="day-cell ${noClass?'noclass':''} ${assess?'assess-day':''} ${dk<TODAY_STR?'is-past':''} ${dk===TODAY_STR?'is-today':''}" ${dk===TODAY_STR?'id="todayCell"':''} data-date="${dayKey}">
       <div class="day-head"><div class="${numCls}">${dayNum}<span class="wd-label">${WD_ALL[wd]}</span></div>
         ${hol?`<div class="holiday-name">${hol}</div>`:(periods.length?bulkSelectHTML(dk):'')}</div>
       ${assess?`<div class="assess-line">${esc(assess)}</div>`:''}
       ${ev&&ev.t?`<div class="event-line">${esc(ev.t)}</div>`:''}
-      <div class="section-label">업무 <button class="add-mini" data-role="task-add" data-day="${dayKey}">+ 추가</button></div>
+      <div class="section-label">업무 <button class="add-mini" data-role="task-add" data-date="${dayKey}">+ 추가</button></div>
       <div class="task-list">${tasksHTML}</div>
       <hr class="divider">
       <div class="section-label">수업 <button class="add-mini" data-role="class-add" data-date="${dk}">+ 보강 추가</button></div>
@@ -996,38 +1049,58 @@
     if(list&&list.forEach) list.forEach(autoGrow);
   }
 
+  function weekStartOf(d){ const x=new Date(d); x.setDate(x.getDate()-x.getDay()); x.setHours(0,0,0,0); return x; }
+
   async function render(){
-    document.getElementById('monthTitle').textContent=`${state.year}년 ${state.month+1}월`;
-    document.getElementById('subtitleInput').value=state.subtitle;
-    const mk=monthKey(state.year,state.month);
-    if(loadedKey!==mk){
-      state.monthData=await loadMonth(state.year,state.month);
-      loadedKey=mk;
+    const grid=document.getElementById('calendarGrid');
+    const wk=document.querySelector('.weekday-row');
+    const isWeek=state.viewMode==='week';
+
+    let cells=[];
+    if(isWeek){
+      if(!state.weekStart) state.weekStart=fmtDate(weekStartOf(new Date()));
+      const s0=new Date(state.weekStart+'T00:00:00');
+      for(let i=0;i<7;i++){
+        const d=new Date(s0); d.setDate(d.getDate()+i);
+        cells.push({y:d.getFullYear(),m:d.getMonth(),d:d.getDate(),cur:true});
+      }
+      const a=cells[1], b=cells[5];
+      document.getElementById('monthTitle').textContent=
+        `${a.m+1}월 ${a.d}일 – ${b.m+1===a.m+1?'':(b.m+1)+'월 '}${b.d}일`;
+    } else {
+      const y=state.year,m=state.month;
+      const firstDow=new Date(y,m,1).getDay(), total=daysInMonth(y,m);
+      const pmDays=daysInMonth(y,m-1<0?11:m-1);
+      const py=m===0?y-1:y, pm=m===0?11:m-1, ny=m===11?y+1:y, nm=m===11?0:m+1;
+      for(let i=firstDow-1;i>=0;i--) cells.push({y:py,m:pm,d:pmDays-i,cur:false});
+      for(let d=1;d<=total;d++) cells.push({y:y,m:m,d:d,cur:true});
+      const trailing=(7-((firstDow+total)%7))%7;
+      for(let d=1;d<=trailing;d++) cells.push({y:ny,m:nm,d:d,cur:false});
+      document.getElementById('monthTitle').textContent=`${y}년 ${m+1}월`;
     }
+    document.getElementById('subtitleInput').value=state.subtitle;
 
-    const y=state.year,m=state.month;
-    const firstDow=new Date(y,m,1).getDay(), total=daysInMonth(y,m);
-    const pmDays=daysInMonth(y,m-1<0?11:m-1);
-    const py=m===0?y-1:y, pm=m===0?11:m-1, ny=m===11?y+1:y, nm=m===11?0:m+1;
-    const assign=simulateUpTo(dateKey(y,m,total));
+    // 필요한 달 데이터 불러오기
+    const need={};
+    cells.forEach(c=>{ if(c.cur) need[monthKey(c.y,c.m)]=true; });
+    for(const mk of Object.keys(need)) await ensureMonthLoaded(mk);
 
-    const cells=[];
-    for(let i=firstDow-1;i>=0;i--) cells.push({y:py,m:pm,d:pmDays-i,cur:false});
-    for(let d=1;d<=total;d++) cells.push({y:y,m:m,d:d,cur:true});
-    const trailing=(7-((firstDow+total)%7))%7;
-    for(let d=1;d<=trailing;d++) cells.push({y:ny,m:nm,d:d,cur:false});
+    const lastCell=cells[cells.length-1];
+    const assign=simulateUpTo(dateKey(lastCell.y,lastCell.m,lastCell.d));
 
     let html='';
     cells.forEach(c=>{ html+=buildCell(c.y,c.m,c.d,c.cur,c.cur?assign:{}); });
-    document.getElementById('calendarGrid').innerHTML=html;
+    grid.innerHTML=html;
+    grid.classList.toggle('week-view',isWeek);
+    if(wk) wk.classList.toggle('week-view',isWeek);
     growAll();
   }
 
   const grid=document.getElementById('calendarGrid');
   grid.addEventListener('click',e=>{
     const el=e.target, role=el.dataset.role;
-    if(role==='task-add'){ ensureDay(+el.dataset.day).tasks.push({text:'',done:false}); scheduleMonthSave(); render(); }
-    else if(role==='task-del'){ ensureDay(+el.dataset.day).tasks.splice(+el.dataset.idx,1); scheduleMonthSave(); render(); }
+    if(role==='task-add'){ ensureDayD(el.dataset.date).tasks.push({text:'',done:false}); scheduleMonthSave(el.dataset.date); render(); }
+    else if(role==='task-del'){ ensureDayD(el.dataset.date).tasks.splice(+el.dataset.idx,1); scheduleMonthSave(el.dataset.date); render(); }
     else if(role==='class-add'){
       const dk=el.dataset.date;
       const free=emptyPeriodsFor(dk,null);
@@ -1043,12 +1116,12 @@
       if(state.endMarks[k]) delete state.endMarks[k]; else state.endMarks[k]=true;
       saveMarks(); render();
     }
-    else if(role==='extra-del'){ ensureDay(+el.dataset.day).extra.splice(+el.dataset.idx,1); scheduleMonthSave(); render(); }
+    else if(role==='extra-del'){ ensureDayD(el.dataset.date).extra.splice(+el.dataset.idx,1); scheduleMonthSave(el.dataset.date); render(); }
     else if(role==='task-hl'){
       const HLS=HL_ORDER;
-      const t=ensureDay(+el.dataset.day).tasks[+el.dataset.idx];
+      const t=ensureDayD(el.dataset.date).tasks[+el.dataset.idx];
       t.hl=HLS[(HLS.indexOf(t.hl||'')+1)%HLS.length]||'';
-      scheduleMonthSave(); render();
+      scheduleMonthSave(el.dataset.date); render();
     }
     else if(role==='wk-hl'){
       const HLS=HL_ORDER;
@@ -1113,8 +1186,8 @@
       if(el.checked) state.doneMarks[k]=true; else delete state.doneMarks[k];
       saveMarks(); render();
     } else if(role==='task-done'){
-      ensureDay(+el.dataset.day).tasks[+el.dataset.idx].done=el.checked;
-      scheduleMonthSave(); render();
+      ensureDayD(el.dataset.date).tasks[+el.dataset.idx].done=el.checked;
+      scheduleMonthSave(el.dataset.date); render();
     } else if(role==='wk-done'){
       ensureWeek(el.dataset.wk)[+el.dataset.idx].done=el.checked;
       saveWeekly(); render();
@@ -1124,9 +1197,9 @@
   grid.addEventListener('input',e=>{
     const el=e.target, role=el.dataset.role;
     if(!role) return;
-    if(role==='task-text'){ autoGrow(el); ensureDay(+el.dataset.day).tasks[+el.dataset.idx].text=el.value; scheduleMonthSave(); }
-    else if(role==='extra-label'){ ensureDay(+el.dataset.day).extra[+el.dataset.idx].label=el.value; scheduleMonthSave(); }
-    else if(role==='extra-text'){ ensureDay(+el.dataset.day).extra[+el.dataset.idx].text=el.value; scheduleMonthSave(); }
+    if(role==='task-text'){ autoGrow(el); ensureDayD(el.dataset.date).tasks[+el.dataset.idx].text=el.value; scheduleMonthSave(el.dataset.date); }
+    else if(role==='extra-label'){ ensureDayD(el.dataset.date).extra[+el.dataset.idx].label=el.value; scheduleMonthSave(el.dataset.date); }
+    else if(role==='extra-text'){ ensureDayD(el.dataset.date).extra[+el.dataset.idx].text=el.value; scheduleMonthSave(el.dataset.date); }
     else if(role==='override'){ state.overrides[el.dataset.key]=el.value; saveMarks(); }
     else if(role==='dateslot'){
       if(el.value.trim()) state.dateSlots[el.dataset.key]=el.value; else delete state.dateSlots[el.dataset.key];
@@ -1152,13 +1225,27 @@
     }
   });
 
-  document.getElementById('prevBtn').onclick=()=>{ flushMonthSave(); loadedKey=null; state.month--; if(state.month<0){state.month=11;state.year--;} render(); };
-  document.getElementById('nextBtn').onclick=()=>{ flushMonthSave(); loadedKey=null; state.month++; if(state.month>11){state.month=0;state.year++;} render(); };
+  function shift(dir){
+    flushMonthSave();
+    if(state.viewMode==='week'){
+      const d=new Date(state.weekStart+'T00:00:00');
+      d.setDate(d.getDate()+7*dir);
+      state.weekStart=fmtDate(d);
+      state.year=d.getFullYear(); state.month=d.getMonth();
+    } else {
+      state.month+=dir;
+      if(state.month<0){state.month=11;state.year--;}
+      if(state.month>11){state.month=0;state.year++;}
+    }
+    render();
+  }
+  document.getElementById('prevBtn').onclick=()=>shift(-1);
+  document.getElementById('nextBtn').onclick=()=>shift(1);
   document.getElementById('todayBtn').onclick=async()=>{
     flushMonthSave();
-    loadedKey=null;
     const t=new Date();
     state.year=t.getFullYear(); state.month=t.getMonth();
+    state.weekStart=fmtDate(weekStartOf(t));
     await render();
     const c=document.getElementById('todayCell');
     if(c&&c.scrollIntoView) c.scrollIntoView({behavior:'smooth',block:'center'});
@@ -1279,6 +1366,16 @@
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),3000);
   };
+
+  function setView(v){
+    state.viewMode=v;
+    if(v==='week' && !state.weekStart) state.weekStart=fmtDate(weekStartOf(new Date()));
+    document.getElementById('viewMonth').classList.toggle('active',v==='month');
+    document.getElementById('viewWeek').classList.toggle('active',v==='week');
+    saveBase(); render();
+  }
+  document.getElementById('viewMonth').onclick=()=>setView('month');
+  document.getElementById('viewWeek').onclick=()=>setView('week');
 
   document.getElementById('subtitleInput').onchange=e=>{ state.subtitle=e.target.value; saveBase(); };
 
@@ -1539,7 +1636,8 @@
       Object.keys(bundle.months||{}).forEach(k=>queueWrite(k,()=>bundle.months[k]));
       let guard=0;
       while((queueRunning||Object.keys(pending).length) && guard++<600) await sleep(100);
-      loadedKey=null;
+      Object.keys(loadedMonths).forEach(k=>delete loadedMonths[k]);
+      state.months={};
       await loadAll();
       await render();
       alert('복원했습니다.');
@@ -1547,7 +1645,13 @@
     btn.textContent=old; btn.disabled=false;
   };
 
-  (async function(){ await loadAll(); render(); })();
+  (async function(){
+    await loadAll();
+    if(state.viewMode==='week' && !state.weekStart) state.weekStart=fmtDate(weekStartOf(new Date()));
+    document.getElementById('viewMonth').classList.toggle('active',state.viewMode!=='week');
+    document.getElementById('viewWeek').classList.toggle('active',state.viewMode==='week');
+    render();
+  })();
 })();
 </script>
 </body>
