@@ -99,6 +99,11 @@
 
   .class-rows{display:flex;flex-direction:column;gap:4px;}
   .class-block{border-left:3px solid var(--class-accent-10);padding-left:5px;}
+  .done-chk{width:12px;height:12px;flex:none;accent-color:var(--class-accent);margin:0;}
+  .class-block.lesson-done{background:#F0EDE6;border-left-color:#C4BCAC;opacity:.72;}
+  .class-block.lesson-done .cls-pick{color:var(--ink-30);text-decoration:line-through;}
+  .class-block.lesson-done .cls-text{background:#E8E4DA;color:var(--ink-60);text-decoration:line-through;}
+  .class-block.lesson-done .end-toggle{opacity:.3;}
   .class-block.skipped{border-left-color:var(--ink-10);background:var(--skip-bg);border-radius:2px;padding:2px 4px 3px 5px;}
   .class-row{display:flex;gap:3px;align-items:center;}
   .cls-pick{font-size:15px;font-weight:800;color:var(--class-accent);border:1px solid transparent;border-radius:3px;background:transparent;padding:0 0;font-family:inherit;flex:none;width:48px;cursor:pointer;letter-spacing:-0.3px;}
@@ -206,6 +211,7 @@
     .period-pick{font-size:12px;width:56px;}
     .reason-select,.bulk-select{font-size:12px;max-width:110px;padding:3px;}
     .end-toggle{font-size:11px;line-height:18px;padding:0 8px;opacity:.6;}
+    .done-chk{width:16px;height:16px;}
     .cls-text{font-size:14px;padding:6px;}
     .slot-select{font-size:14px;padding:5px;}
     .class-rows{gap:8px;}
@@ -262,7 +268,7 @@
 
   <div class="footnote">
     반 이름을 클릭하면 그날만 다른 반으로 바꿀 수 있습니다 (수업 교체). "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
-    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 업무·주간 목표 항목의 ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
+    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 수업 왼쪽 체크박스로 진행한 수업을 표시하면 취소선이 그어지고 아래로 내려갑니다. 업무·주간 목표도 완료하면 아래로 내려가요. ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
   </div>
 </div>
 
@@ -538,7 +544,7 @@
     assess:JSON.parse(JSON.stringify(DEFAULT_ASSESS)),
     slots:JSON.parse(JSON.stringify(DEFAULT_SLOTS)),
     events:buildDefaultEvents(),
-    skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, endMarks:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
+    skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, endMarks:{}, doneMarks:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
     monthData:{}, weekly:{}
   };
   let activeCurrClass=null, activeTerm='t2', saveTimer=null, wkTimer=null, evMonth=null;
@@ -584,7 +590,7 @@
       quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark};
   }
   function eventsObj(){ return {events:state.events,assess:state.assess,dayTT:state.dayTT}; }
-  function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks}; }
+  function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks,doneMarks:state.doneMarks}; }
 
   const timers={};
   function saveIt(key,getter){
@@ -639,6 +645,7 @@
       if(M.swaps) state.swaps=M.swaps;
       if(M.dateSlots) state.dateSlots=M.dateSlots;
       if(M.endMarks) state.endMarks=M.endMarks;
+      if(M.doneMarks) state.doneMarks=M.doneMarks;
     }
 
     // --- 이전 버전 데이터 보정 ---
@@ -835,7 +842,8 @@
     const mon=new Date(sunDate); mon.setDate(mon.getDate()+1);
     const fri=new Date(sunDate); fri.setDate(fri.getDate()+5);
     const range=`${mon.getMonth()+1}.${mon.getDate()} – ${fri.getMonth()+1}.${fri.getDate()}`;
-    const list=items.map((t,i)=>`
+    const wkOrder=items.map((t,i)=>({t,i})).sort((a,b)=>(a.t.done?1:0)-(b.t.done?1:0));
+    const list=wkOrder.map(({t,i})=>`
       <div class="task-item wk-item ${t.done?'done':''} hl-${t.hl||'none'}">
         <input type="checkbox" data-role="wk-done" data-wk="${wk}" data-idx="${i}" ${t.done?'checked':''}>
         <textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="wk-text" data-wk="${wk}" data-idx="${i}" placeholder="이번 주 할 일">${esc(t.text)}</textarea>
@@ -889,7 +897,8 @@
 
     const data=ensureDay(dayNum), dayKey=pad2(dayNum);
     const dayReason=dayReasonOf(dk);
-    const tasksHTML=data.tasks.map((t,i)=>`
+    const tasksOrder=data.tasks.map((t,i)=>({t,i})).sort((a,b)=>(a.t.done?1:0)-(b.t.done?1:0));
+    const tasksHTML=tasksOrder.map(({t,i})=>`
       <div class="task-item ${t.done?'done':''} hl-${t.hl||'none'}">
         <input type="checkbox" data-role="task-done" data-day="${dayKey}" data-idx="${i}" ${t.done?'checked':''}>
         <textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="task-text" data-day="${dayKey}" data-idx="${i}" placeholder="업무">${esc(t.text)}</textarea>
@@ -898,15 +907,21 @@
       </div>`).join('');
 
     const dayAssign=assign[dk]||{};
-    const periods=Object.keys(dayAssign).map(Number).sort((a,b)=>a-b);
+    const periods=Object.keys(dayAssign).map(Number).sort((a,b)=>{
+      const da=state.doneMarks[`${dk}|${dayAssign[a].className}|${a}`]?1:0;
+      const db=state.doneMarks[`${dk}|${dayAssign[b].className}|${b}`]?1:0;
+      return da-db || a-b;
+    });
     const classHTML= hol ? '' : periods.map(p=>{
       const a=dayAssign[p], key=`${dk}|${a.className}|${p}`;
+      const isDone=!!state.doneMarks[key];
       const periodCtl = a.isExtra
         ? `<select class="period-pick" data-role="move-period" data-key="${dk}|${p}" title="교시 변경">${
             emptyPeriodsFor(dk,p).map(n=>`<option value="${n}" ${n===p?'selected':''}>${n}교시</option>`).join('')}</select>`
         : `<span class="seq-badge period-badge">${p}교시</span>`;
-      return `<div class="class-block ${a.reason?'skipped':''} ${a.isExtra?'extra-class':''} ${a.last?'last-lesson':''} ${(a.over||a.afterEnd)?'over-lesson':''}" title="${a.seq?a.seq+'차시':''}">
+      return `<div class="class-block ${a.reason?'skipped':''} ${a.isExtra?'extra-class':''} ${a.last?'last-lesson':''} ${(a.over||a.afterEnd)?'over-lesson':''} ${isDone?'lesson-done':''}" title="${a.seq?a.seq+'차시':''}">
         <div class="class-row">
+          <input type="checkbox" class="done-chk" title="수업 완료" data-role="lesson-done" data-key="${escAttr(key)}" ${isDone?'checked':''}>
           ${periodCtl}
           ${classSelectHTML(dk,p,a.className,a.swapped)}
           ${a.reason?`<span class="seq-badge">${esc(a.reason)}</span>`:''}
@@ -1093,6 +1108,10 @@
       else if(auto) state.picks[k]='__none__';
       else delete state.picks[k];
       saveMarks(); render();
+    } else if(role==='lesson-done'){
+      const k=el.dataset.key;
+      if(el.checked) state.doneMarks[k]=true; else delete state.doneMarks[k];
+      saveMarks(); render();
     } else if(role==='task-done'){
       ensureDay(+el.dataset.day).tasks[+el.dataset.idx].done=el.checked;
       scheduleMonthSave(); render();
@@ -1238,6 +1257,8 @@
       .class-block{display:flex;flex-wrap:wrap;gap:3px;align-items:baseline;border-left:2px solid #cfe0d4;padding-left:3px;margin-bottom:2px;}
       .class-block.skipped{border-left-color:#ccc;color:#888;}
       .class-block.last-lesson{border-left-color:#C8863C;}
+      .class-block.lesson-done{color:#999;}
+      .class-block.lesson-done .p-cls-pick,.class-block.lesson-done .p-cls-text{text-decoration:line-through;color:#999;}
       .p-cls-pick{font-weight:800;font-size:${base+2.5}px;color:#2f5c45;}
       .p-period-badge,.seq-badge{font-size:${base-1}px;color:#777;}
       .p-cls-text{font-size:${base-0.4}px;width:100%;}
