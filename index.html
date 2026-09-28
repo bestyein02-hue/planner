@@ -765,6 +765,19 @@
       state.gymAuto=true;
       setTimeout(()=>{ saveBase(); saveMarks(); },600);
     }
+    if(!state.sportSlot){
+      if(!state.slots) state.slots=[];
+      state.slots.forEach(x=>{
+        if(x.day==='wed' && +x.period===7){
+          x.options=x.options||[];
+          if(!x.options.includes('직원체육')) x.options.push('직원체육');
+        }
+      });
+      if(!state.slots.some(x=>x.day==='fri' && +x.period===7))
+        state.slots.push({day:'fri',period:7,options:['직원체육','직원회의']});
+      state.sportSlot=true;
+      setTimeout(saveBase,500);
+    }
     if(!state.progMark){
       Object.keys(state.curriculum||{}).forEach(tid=>{
         const byClass=state.curriculum[tid]||{};
