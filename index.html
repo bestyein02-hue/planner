@@ -77,6 +77,7 @@
   .calendar-grid.week-view .end-toggle{font-size:11px;line-height:17px;padding:0 7px;}
   .calendar-grid.week-view .done-chk{width:15px;height:15px;}
   .calendar-grid.week-view .empty-tag{font-size:12px;padding:2px 9px;}
+  .calendar-grid.week-view .swap-note{font-size:12.5px;padding:4px 2px;}
   .calendar-grid.week-view .empty-note{font-size:11.5px;}
   .calendar-grid.week-view .class-rows{gap:7px;}
   .calendar-grid.week-view .slot-select{font-size:13px;}
@@ -161,6 +162,11 @@
   .class-block.empty-slot .cls-pick{color:#8A7A5E;}
   .empty-tag{font-size:10px;font-weight:700;color:#8A7A5E;background:#E6DCC7;border-radius:8px;padding:1px 7px;margin-left:auto;}
   .empty-note{font-size:9.5px;color:var(--ink-30);margin-top:2px;}
+  .swap-note{width:100%;border:none;border-bottom:1px dashed var(--ink-10);background:transparent;
+    font-size:10.5px;color:var(--ink-60);font-family:inherit;padding:2px 1px;margin-top:3px;}
+  .swap-note:focus{outline:none;border-bottom-color:var(--class-accent);background:#F7F7F6;}
+  .swap-note.filled{color:var(--class-accent);font-weight:600;border-bottom-style:solid;border-bottom-color:#EBD5C9;}
+  .swap-note::placeholder{color:var(--ink-30);font-style:italic;}
   /* 그 분기 진도의 마지막 차시 */
   .end-toggle{border:1px solid var(--ink-10);background:transparent;color:var(--ink-30);font-size:9px;
     border-radius:8px;padding:0 5px;cursor:pointer;font-family:inherit;line-height:14px;flex:none;opacity:.45;}
@@ -265,6 +271,7 @@
     .period-pick{font-size:12px;width:56px;}
     .reason-select,.bulk-select{font-size:12px;max-width:110px;padding:3px;}
     .end-toggle{font-size:11px;line-height:18px;padding:0 8px;opacity:.6;}
+    .swap-note{font-size:13px;padding:4px 2px;}
     .done-chk{width:16px;height:16px;}
     .cls-text{font-size:14px;padding:6px;}
     .slot-select{font-size:14px;padding:5px;}
@@ -326,7 +333,7 @@
   <div class="grid-scroll"><div class="calendar-grid" id="calendarGrid"></div></div>
 
   <div class="footnote">
-    반 이름을 클릭하면 그날만 다른 반으로 바꾸거나 "빈 시간"으로 비울 수 있습니다. 비운 자리는 빗금과 함께 "빈 시간"으로 남아서 헷갈리지 않습니다. "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
+    반 이름을 클릭하면 그날만 다른 반으로 바꾸거나 "빈 시간"으로 비울 수 있습니다. 비운 자리는 빗금과 함께 "빈 시간"으로 남고, 그 아래 메모칸에 누구와 언제 교체했는지 적어둘 수 있습니다. "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
     학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 수업 왼쪽 체크박스로 진행한 수업을 표시하면 취소선이 그어지고 아래로 내려갑니다. 업무·주간 목표도 완료하면 아래로 내려가요. ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 업무·주간 목표 항목은 끌어서 다른 날짜로 옮길 수 있습니다 (일요일 칸에 놓으면 그 주의 주간 목표가 됩니다). 오른쪽 위 "월 / 주" 버튼으로 한 달 전체 보기와 한 주만 크게 보기를 오갈 수 있습니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
   </div>
 </div>
@@ -482,7 +489,8 @@
     thu:['1-6','','1-9','','1-8','1-5',''],
     fri:['1-4','1-9','','','1-6','','']
   };
-  const DEFAULT_SLOTS=[{day:'wed',period:7,options:['창체','동아리','직원회의']}];
+  const DEFAULT_SLOTS=[{day:'wed',period:7,options:['창체','동아리','직원회의','직원체육']},
+                       {day:'fri',period:7,options:['직원체육','직원회의']}];
   const DEFAULT_LESSONS=[
     "OT","기출정식 6,8번","수프림 4과 1,2,3번","수프림 4과 4,5번","수프림 6과 1,2,3번","수프림 6과 4,5번",
     "수프림 10과 1,2,3번","수프림 10과 4, 5번 + 발표1*","발표2","채점/OMR확인","채점/OMR확인","교과서4과",
@@ -624,14 +632,14 @@
     year:today.getFullYear(), month:today.getMonth(),
     subtitle:'', periodsCount:7,
     timetable:JSON.parse(JSON.stringify(DEFAULT_TIMETABLE)),
-    terms:JSON.parse(JSON.stringify(DEFAULT_TERMS)), quarterSplit:true, gymAuto:true, progMark:true,
+    terms:JSON.parse(JSON.stringify(DEFAULT_TERMS)), quarterSplit:true, gymAuto:true, progMark:true, sportSlot:true,
     curriculum:JSON.parse(JSON.stringify(DEFAULT_CURRICULUM)),
     dayTT:Object.assign({},DEFAULT_DAYTT),
     dateSlots:Object.assign({},DEFAULT_DATESLOTS),
     assess:JSON.parse(JSON.stringify(DEFAULT_ASSESS)),
     slots:JSON.parse(JSON.stringify(DEFAULT_SLOTS)),
     events:buildDefaultEvents(),
-    skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, endMarks:{}, doneMarks:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
+    skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, endMarks:{}, doneMarks:{}, swapNotes:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
     months:{}, weekly:{}, viewMode:'month', weekStart:null
   };
   let activeCurrClass=null, activeTerm='t2', saveTimer=null, wkTimer=null, evMonth=null;
@@ -674,10 +682,10 @@
   function baseObj(){
     return {subtitle:state.subtitle,periodsCount:state.periodsCount,
       timetable:state.timetable,terms:state.terms,slots:state.slots,
-      quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark,viewMode:state.viewMode};
+      quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark,sportSlot:state.sportSlot,viewMode:state.viewMode};
   }
   function eventsObj(){ return {events:state.events,assess:state.assess,dayTT:state.dayTT}; }
-  function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks,doneMarks:state.doneMarks}; }
+  function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks,doneMarks:state.doneMarks,swapNotes:state.swapNotes}; }
 
   const timers={};
   function saveIt(key,getter){
@@ -711,6 +719,7 @@
       state.quarterSplit=!!B.quarterSplit;
       state.gymAuto=!!B.gymAuto;
       state.progMark=!!B.progMark;
+      state.sportSlot=!!B.sportSlot;
       if(B.viewMode) state.viewMode=B.viewMode;
     }
     const C=curr||cfg.curriculum;
@@ -734,6 +743,7 @@
       if(M.dateSlots) state.dateSlots=M.dateSlots;
       if(M.endMarks) state.endMarks=M.endMarks;
       if(M.doneMarks) state.doneMarks=M.doneMarks;
+      if(M.swapNotes) state.swapNotes=M.swapNotes;
     }
 
     // --- 이전 버전 데이터 보정 ---
@@ -813,7 +823,9 @@
   // 학사일정 문구 → 자동 배정 (요일·교시·키워드)
   const AUTO_RULES=[
     {day:'wed', periods:[5,6], keyword:'동아리', label:'동아리'},
-    {day:'wed', periods:[7],   keyword:'직원회의', label:'직원회의'}
+    {day:'wed', periods:[7],   keyword:'직원회의', label:'직원회의'},
+    {day:'wed', periods:[7],   keyword:'직원체육', label:'직원체육'},
+    {day:'fri', periods:[7],   keyword:'직원체육', label:'직원체육'}
   ];
   const GYM_KEY='체육관 모임';
   function isGymDay(ds){
@@ -978,6 +990,11 @@
       .concat(list.map(r=>`<option value="${escAttr(r)}" ${r===current?'selected':''}>${esc(r)}</option>`));
     return `<select class="reason-select ${current?'on':''}" data-role="reason" data-key="${escAttr(key)}" data-dayreason="${escAttr(dayReason)}">${opts.join('')}</select>`;
   }
+  function swapNoteHTML(dk,period,ph){
+    const k=`${dk}|${period}`;
+    const v=state.swapNotes[k]||'';
+    return `<input type="text" class="swap-note${v?' filled':''}" data-role="swapnote" data-key="${escAttr(k)}" value="${escAttr(v)}" placeholder="${ph}">`;
+  }
   function classSelectHTML(dk,period,current,swapped){
     const names=classNames();
     const isEmpty=(current==='__empty__');
@@ -1035,6 +1052,7 @@
             <span class="empty-tag">빈 시간</span>
           </div>
           <div class="empty-note">원래 ${esc(shortName(a.baseClass))} · 교체됨</div>
+          ${swapNoteHTML(dk,p,'누구와 · 언제로 교체')}
         </div>`;
       }
       const key=`${dk}|${a.className}|${p}`;
@@ -1054,6 +1072,7 @@
           ${a.isExtra?`<button class="del" data-role="extra-class-del" data-key="${dk}|${p}">×</button>`:''}
         </div>
         <input type="text" class="cls-text" data-role="override" data-key="${escAttr(key)}" value="${escAttr(a.lesson)}" placeholder="${a.over?'자습 (진도 끝)':'수업 내용'}">
+        ${(a.isExtra||a.swapped)?swapNoteHTML(dk,p,a.isExtra?'어느 시간 보강인지':'누구와 교체했는지'):''}
       </div>`;
     }).join('');
 
@@ -1406,6 +1425,10 @@
     else if(role==='extra-label'){ ensureDayD(el.dataset.date).extra[+el.dataset.idx].label=el.value; scheduleMonthSave(el.dataset.date); }
     else if(role==='extra-text'){ ensureDayD(el.dataset.date).extra[+el.dataset.idx].text=el.value; scheduleMonthSave(el.dataset.date); }
     else if(role==='override'){ state.overrides[el.dataset.key]=el.value; saveMarks(); }
+    else if(role==='swapnote'){
+      if(el.value.trim()) state.swapNotes[el.dataset.key]=el.value; else delete state.swapNotes[el.dataset.key];
+      saveMarks();
+    }
     else if(role==='dateslot'){
       if(el.value.trim()) state.dateSlots[el.dataset.key]=el.value; else delete state.dateSlots[el.dataset.key];
       saveMarks();
@@ -1745,7 +1768,7 @@
   }
   document.getElementById('slotAddBtn').onclick=()=>{
     if(!state.slots) state.slots=[];
-    state.slots.push({day:'wed',period:7,options:['창체','동아리','직원회의']});
+    state.slots.push({day:'wed',period:7,options:['창체','동아리','직원회의','직원체육']});
     saveBase(); renderSlots();
   };
 
