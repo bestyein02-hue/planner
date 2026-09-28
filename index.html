@@ -95,6 +95,7 @@
   .day-cell.other-month{background:var(--card-dim);}
   .day-cell.other-month .day-num{color:var(--ink-30);}
   .day-cell.sunday{background:#FAFAF9;}
+  .day-cell.saturday{background:#FAFAF9;}
   .day-cell.noclass{background:#F4F4F3;}
   .day-cell.is-past{background:#F7F7F6;}
   .day-cell.is-past .day-num{color:var(--ink-30);}
@@ -271,6 +272,7 @@
     .calendar-grid{display:block;min-width:0;border:none;background:transparent;}
     .day-cell{min-height:0;margin-bottom:8px;border:1px solid var(--ink-10);border-radius:6px;padding:10px 12px;}
     .calendar-grid.week-view .day-cell{min-height:0;padding:10px 12px;}
+    .day-cell.saturday{padding:8px 12px;}
     .viewswitch{flex:none;}
     .vbtn{padding:6px 14px;font-size:12px;}
     .day-cell.other-month{display:none;}
@@ -1075,6 +1077,15 @@
         ${weekGoalHTML(dObj)}</div>`;
     }
     if(!inMonth) return `<div class="day-cell other-month"><div class="day-head"><div class="${numCls}">${dayNum}</div></div></div>`;
+
+    // 토요일 — 업무·수업 없음, 날짜와 일정만
+    if(wd===6){
+      return `<div class="day-cell saturday ${dk<TODAY_STR?'is-past':''} ${dk===TODAY_STR?'is-today':''}" data-date="${dk}" ${dk===TODAY_STR?'id="todayCell"':''}>
+        <div class="day-head"><div class="${numCls}">${dayNum}<span class="wd-label">${WD_ALL[wd]}</span></div>${hol?`<span class="holiday-name">${hol}</span>`:''}</div>
+        ${assess?`<div class="assess-line">${esc(assess)}</div>`:''}
+        ${ev&&ev.t?`<div class="event-line">${esc(ev.t)}</div>`:''}
+      </div>`;
+    }
 
     const data=ensureDayD(dk), dayKey=dk;
     const dayReason=dayReasonOf(dk);
