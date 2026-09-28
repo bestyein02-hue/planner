@@ -31,11 +31,11 @@
   body{margin:0;background:var(--paper);color:var(--ink);padding:28px 20px 60px;}
   .wrap{max-width:1600px;margin:0 auto;}
   .head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:18px;padding-bottom:16px;border-bottom:2px solid var(--ink);}
-  .head-left{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  .head-left{display:flex;align-items:baseline;gap:12px;flex-wrap:nowrap;min-width:0;}
   .month-title{font-family:"Nanum Myeongjo",Georgia,serif;font-size:40px;font-weight:700;white-space:nowrap;}
   .nav-btn{width:32px;height:32px;border:1px solid var(--ink-30);background:var(--card);color:var(--ink);font-size:16px;cursor:pointer;border-radius:4px;}
   .nav-btn:hover{background:var(--ink-10);}
-  .night-summary{font-size:12px;color:var(--ink-30);white-space:nowrap;}
+  .night-summary{font-size:12px;color:var(--ink-30);white-space:nowrap;flex:none;}
   .night-summary.has{color:var(--class-accent);background:var(--class-accent-10);border-radius:12px;padding:4px 11px;}
   .night-summary b{font-weight:700;}
   .head-right-mini{display:flex;align-items:center;gap:4px;margin-left:auto;}
@@ -46,7 +46,7 @@
   .day-cell:has(.night-btn.on){box-shadow:inset 3px 0 0 var(--class-accent);}
   .subtitle-input{border:none;background:transparent;font-size:14px;color:var(--ink-60);border-bottom:1px dashed var(--ink-30);padding:2px 0;width:220px;}
   .subtitle-input:focus{outline:none;border-bottom-color:var(--ink);}
-  .head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .head-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
   .btn{border:1px solid var(--ink);background:var(--card);padding:6px 14px;font-size:13px;border-radius:4px;cursor:pointer;color:var(--ink);}
   .btn{display:inline-flex;align-items:center;gap:6px;}
   .btn svg.ic{display:none;width:17px;height:17px;flex:none;}
@@ -252,7 +252,7 @@
     .head{padding-bottom:12px;margin-bottom:12px;gap:10px;}
     .head-left{gap:8px;width:100%;}
     .month-title{font-size:26px;}
-    .night-summary{font-size:12px;color:var(--ink-30);white-space:nowrap;}
+    .night-summary{font-size:12px;color:var(--ink-30);white-space:nowrap;flex:none;}
   .night-summary.has{color:var(--class-accent);background:var(--class-accent-10);border-radius:12px;padding:4px 11px;}
   .night-summary b{font-weight:700;}
   .head-right-mini{display:flex;align-items:center;gap:4px;margin-left:auto;}
@@ -331,7 +331,6 @@
       <div class="month-title" id="monthTitle"></div>
       <button class="nav-btn" id="nextBtn">›</button>
       <span class="night-summary" id="nightSummary"></span>
-      <input class="subtitle-input" id="subtitleInput" placeholder="다이어리 제목">
     </div>
     <div class="head-right">
       <div class="viewswitch">
@@ -380,6 +379,12 @@
     </div>
 
     <div class="tab-panel active" id="panel-tt">
+      <div class="tt-controls" style="margin-bottom:6px">
+        다이어리 제목
+        <input type="text" class="subtitle-input" id="subtitleInput" placeholder="예: YEAH PLANNER"
+               style="width:220px;border:1px solid var(--ink-30);border-radius:4px;padding:5px 8px;font-size:13px;color:var(--ink)">
+        <span style="color:var(--ink-30)">인쇄할 때 월 제목 옆에 붙습니다.</span>
+      </div>
       <div class="tt-controls">
         교시 수
         <div class="stepper"><button id="periodsMinus">−</button><span id="periodsVal">7</span><button id="periodsPlus">+</button></div>
@@ -411,7 +416,12 @@
     </div>
 
     <div class="tab-panel" id="panel-slot">
-      <div style="border:1px solid var(--ink-10);border-radius:6px;padding:12px;margin-bottom:16px;background:#FCF7F4">
+      <div style="border:1px solid var(--ink-10);border-radius:6px;padding:12px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--class-accent)">화면 색</div>
+        <div class="chip-row" id="themeChips" style="margin-bottom:6px"></div>
+        <div class="curr-hint" style="margin:0">계절에 맞춰 두면 봄은 카키, 여름은 딥그린, 가을은 브라운, 겨울은 차콜로 자동으로 바뀝니다.</div>
+      </div>
+      <div style="border:1px solid var(--ink-10);border-radius:6px;padding:12px;margin-bottom:16px;background:var(--class-accent-10)">
         <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--class-accent)">야자감독 수당</div>
         <div class="term-field" style="gap:14px;flex-wrap:wrap">
           <label style="display:flex;align-items:center;gap:6px">1회 인정 시간
@@ -517,6 +527,37 @@
   const HL_ORDER=['','yellow','pink','blue','green'];
   const HL_COLORS={yellow:'#FFF3A8',pink:'#FFC7DC',blue:'#BFDDF7',green:'#C6EEC6'};
   const hlStyle=v=>HL_COLORS[v]?`background:${HL_COLORS[v]};border-radius:3px;padding:1px 4px;font-weight:600;`:'';
+  const THEMES={
+    khaki:    {name:'카키',   c:'#7E8B63', t:'#F1F3EC', d:'#63704B'},
+    teal:     {name:'딥그린', c:'#5C7A72', t:'#EDF2F0', d:'#45605A'},
+    brown:    {name:'브라운', c:'#8A5E3C', t:'#F4EEE8', d:'#6E4A2E'},
+    charcoal: {name:'차콜',   c:'#4E4E4A', t:'#EFEFEE', d:'#3A3A37'},
+    clay:     {name:'클레이', c:'#A06A54', t:'#F6EEEA', d:'#7F513E'},
+    orange:   {name:'기본',   c:'#C96442', t:'#FBF0EB', d:'#A34F32'}
+  };
+  // 계절별 (3~5 봄 / 6~8 여름 / 9~11 가을 / 12~2 겨울)
+  const SEASON_THEME={spring:'khaki',summer:'teal',autumn:'brown',winter:'charcoal'};
+  function seasonOf(m){ // m: 0~11
+    if(m>=2&&m<=4) return 'spring';
+    if(m>=5&&m<=7) return 'summer';
+    if(m>=8&&m<=10) return 'autumn';
+    return 'winter';
+  }
+  function applyTheme(){
+    const key=(state.theme==='season'||!state.theme)
+      ? SEASON_THEME[seasonOf(state.month)]
+      : (THEMES[state.theme]?state.theme:'orange');
+    const t=THEMES[key];
+    const r=document.documentElement;
+    if(r&&r.style){
+      r.style.setProperty('--class-accent',t.c);
+      r.style.setProperty('--class-accent-10',t.t);
+      r.style.setProperty('--class-accent-dark',t.d);
+    }
+    const mt=document.querySelector('meta[name="theme-color"]');
+    if(mt&&mt.setAttribute) mt.setAttribute('content',t.c);
+  }
+
   const REASONS=["교체","수행평가","학교행사","모의고사","지필평가","방학/휴업","연가/조퇴/출장","자습","기타"];
   const WD_KEYS=['sun','mon','tue','wed','thu','fri','sat'];
   const WD_LABELS={mon:'월',tue:'화',wed:'수',thu:'목',fri:'금'};
@@ -676,7 +717,7 @@
     year:today.getFullYear(), month:today.getMonth(),
     subtitle:'', periodsCount:7,
     timetable:JSON.parse(JSON.stringify(DEFAULT_TIMETABLE)),
-    nightRate:14213, nightHours:4,
+    nightRate:14213, nightHours:4, theme:'season',
     terms:JSON.parse(JSON.stringify(DEFAULT_TERMS)), quarterSplit:true, gymAuto:true, progMark:true, sportSlot:true,
     curriculum:JSON.parse(JSON.stringify(DEFAULT_CURRICULUM)),
     dayTT:Object.assign({},DEFAULT_DAYTT),
@@ -727,7 +768,7 @@
   function baseObj(){
     return {subtitle:state.subtitle,periodsCount:state.periodsCount,
       timetable:state.timetable,terms:state.terms,slots:state.slots,
-      quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark,sportSlot:state.sportSlot,nightRate:state.nightRate,nightHours:state.nightHours,viewMode:state.viewMode};
+      quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark,sportSlot:state.sportSlot,nightRate:state.nightRate,nightHours:state.nightHours,theme:state.theme,viewMode:state.viewMode};
   }
   function eventsObj(){ return {events:state.events,assess:state.assess,dayTT:state.dayTT}; }
   function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks,doneMarks:state.doneMarks,swapNotes:state.swapNotes,nightDuty:state.nightDuty,slotNotes:state.slotNotes}; }
@@ -767,6 +808,7 @@
       state.sportSlot=!!B.sportSlot;
       if(B.nightRate) state.nightRate=B.nightRate;
       if(B.nightHours) state.nightHours=B.nightHours;
+      if(B.theme) state.theme=B.theme;
       if(B.viewMode) state.viewMode=B.viewMode;
     }
     const C=curr||cfg.curriculum;
@@ -1219,6 +1261,7 @@
   function weekStartOf(d){ const x=new Date(d); x.setDate(x.getDate()-x.getDay()); x.setHours(0,0,0,0); return x; }
 
   async function render(){
+    applyTheme();
     const grid=document.getElementById('calendarGrid');
 
   // ---------- 드래그로 항목 옮기기 ----------
@@ -1312,7 +1355,6 @@
       for(let d=1;d<=trailing;d++) cells.push({y:ny,m:nm,d:d,cur:false});
       document.getElementById('monthTitle').textContent=`${y}년 ${m+1}월`;
     }
-    document.getElementById('subtitleInput').value=state.subtitle;
 
     // 필요한 달 데이터 불러오기
     const need={};
@@ -1699,7 +1741,8 @@
   // ---------- 설정 창 ----------
   const overlay=document.getElementById('modalOverlay');
   document.getElementById('settingsBtn').onclick=()=>{
-    renderTT(); renderChips(); renderSlots(); renderTerms(); syncNightInputs();
+    renderTT(); renderChips(); renderSlots(); renderTerms(); syncNightInputs(); renderThemeChips();
+    const si=document.getElementById('subtitleInput'); if(si) si.value=state.subtitle||'';
     evMonth=`${state.year}-${pad2(state.month+1)}`;
     const mi=document.getElementById('evMonthInput');
     if(mi) mi.value=evMonth;
@@ -1867,6 +1910,20 @@
     });
     tbl.querySelectorAll('[data-role="slot-def"]').forEach(el=>el.onchange=()=>{ state.slots[+el.dataset.idx].def=el.value; saveBase(); renderSlots(); });
     tbl.querySelectorAll('[data-role="slot-del"]').forEach(el=>el.onclick=()=>{ state.slots.splice(+el.dataset.idx,1); saveBase(); renderSlots(); });
+  }
+  function renderThemeChips(){
+    const row=document.getElementById('themeChips');
+    if(!row) return;
+    const cur=state.theme||'season';
+    const items=[['season','계절에 맞춰']].concat(Object.keys(THEMES).map(k=>[k,THEMES[k].name]));
+    row.innerHTML=items.map(([k,label])=>{
+      const col=(k==='season')?null:THEMES[k].c;
+      const dot=col?`<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${col};margin-right:5px;vertical-align:middle"></span>`:'';
+      return `<button type="button" class="chip ${k===cur?'active':''}" data-theme="${k}">${dot}${label}</button>`;
+    }).join('');
+    row.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+      state.theme=c.dataset.theme; saveBase(); applyTheme(); renderThemeChips();
+    });
   }
   function syncNightInputs(){
     const hi=document.getElementById('nightHoursInput'), ri=document.getElementById('nightRateInput');
