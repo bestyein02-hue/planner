@@ -135,6 +135,15 @@
   .day-cell.drop-hover{outline:2px dashed var(--class-accent);outline-offset:-3px;background:#FCF4F0;}
   .task-item input[type=checkbox]{margin-top:2px;}
   .task-item input[type=checkbox]{width:13px;height:13px;flex:none;accent-color:var(--class-accent);}
+  .st-btn{border:none;background:none;cursor:pointer;font-size:12px;line-height:1.2;padding:0 1px;flex:none;
+    color:var(--ink-30);font-family:inherit;margin-top:1px;}
+  .st-btn.st-ing{color:var(--class-accent);}
+  .st-btn.st-done{color:var(--class-accent);}
+  .st-btn:hover{color:var(--ink);}
+  .task-item.st-row-ing textarea{font-weight:600;}
+  .defer-btn{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:12px;padding:0 2px;flex:none;opacity:.4;}
+  .defer-btn:hover{opacity:1;color:var(--class-accent);}
+  .moved-tag{font-size:10px;color:var(--class-accent);flex:none;opacity:.8;}
   .task-item input[type=text],.task-item textarea{border:none;background:transparent;font-size:12px;flex:1;min-width:0;padding:1px 0;font-family:inherit;color:var(--ink);resize:none;overflow:hidden;line-height:1.45;}
   .task-item input[type=text]:focus,.task-item textarea:focus{outline:none;background:#F7F7F6;}
   .task-item.done input[type=text],.task-item.done textarea{text-decoration:line-through;color:var(--ink-30);}
@@ -309,6 +318,8 @@
     .task-item input[type=text],.task-item textarea{font-size:15px;padding:4px 0;}
     .task-item.wk-item input[type=text],.task-item.wk-item textarea{font-size:16px;}
     .hl-btn{font-size:14px;opacity:.6;padding:0 6px;}
+    .st-btn{font-size:16px;padding:0 3px;}
+    .defer-btn{font-size:15px;opacity:.6;padding:0 5px;}
     .task-item input[type=checkbox]{width:17px;height:17px;}
     .section-label{font-size:11px;margin:8px 0 4px;}
     .add-mini{font-size:13px;}
@@ -1114,10 +1125,11 @@
     const mon=new Date(sunDate); mon.setDate(mon.getDate()+1);
     const fri=new Date(sunDate); fri.setDate(fri.getDate()+5);
     const range=`${mon.getMonth()+1}.${mon.getDate()} – ${fri.getMonth()+1}.${fri.getDate()}`;
-    const wkOrder=items.map((t,i)=>({t,i})).sort((a,b)=>(a.t.done?1:0)-(b.t.done?1:0));
+    const rankW=t=>{const st=statusOf(t); return st==='done'?2:(st==='ing'?0:1);};
+    const wkOrder=items.map((t,i)=>({t,i})).sort((a,b)=>rankW(a.t)-rankW(b.t));
     const list=wkOrder.map(({t,i})=>`
-      <div class="task-item wk-item ${t.done?'done':''} hl-${t.hl||'none'}" draggable="true" data-drag="w|${wk}|${i}">
-        <input type="checkbox" data-role="wk-done" data-wk="${wk}" data-idx="${i}" ${t.done?'checked':''}>
+      <div class="task-item wk-item st-row-${statusOf(t)||'none'} ${statusOf(t)==='done'?'done':''} hl-${t.hl||'none'}" draggable="true" data-drag="w|${wk}|${i}">
+        ${statusBtn('wk-status',`data-wk="${wk}" data-idx="${i}"`,statusOf(t))}
         <textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="wk-text" data-wk="${wk}" data-idx="${i}" placeholder="이번 주 할 일">${esc(t.text)}</textarea>
         <button class="hl-btn" title="형광펜" style="color:${HL_COLORS[t.hl]||''}" data-role="wk-hl" data-wk="${wk}" data-idx="${i}">✦</button>
         <button class="del" data-role="wk-del" data-wk="${wk}" data-idx="${i}">×</button>
@@ -1184,11 +1196,14 @@
 
     const data=ensureDayD(dk), dayKey=dk;
     const dayReason=dayReasonOf(dk);
-    const tasksOrder=data.tasks.map((t,i)=>({t,i})).sort((a,b)=>(a.t.done?1:0)-(b.t.done?1:0));
+    const rank=t=>{const st=statusOf(t); return st==='done'?2:(st==='ing'?0:1);};
+    const tasksOrder=data.tasks.map((t,i)=>({t,i})).sort((a,b)=>rank(a.t)-rank(b.t));
     const tasksHTML=tasksOrder.map(({t,i})=>`
-      <div class="task-item ${t.done?'done':''} hl-${t.hl||'none'}" draggable="true" data-drag="t|${dayKey}|${i}">
-        <input type="checkbox" data-role="task-done" data-date="${dayKey}" data-idx="${i}" ${t.done?'checked':''}>
+      <div class="task-item st-row-${statusOf(t)||'none'} ${statusOf(t)==='done'?'done':''} hl-${t.hl||'none'}" draggable="true" data-drag="t|${dayKey}|${i}">
+        ${statusBtn('task-status',`data-date="${dayKey}" data-idx="${i}"`,statusOf(t))}
         <textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="task-text" data-date="${dayKey}" data-idx="${i}" placeholder="업무">${esc(t.text)}</textarea>
+        ${t.moved?'<span class="moved-tag" title="연기된 일">↷</span>':''}
+        <button class="defer-btn" title="다음 근무일로 넘기기" data-role="task-defer" data-date="${dayKey}" data-idx="${i}">→</button>
         <button class="hl-btn" title="형광펜" style="color:${HL_COLORS[t.hl]||''}" data-role="task-hl" data-date="${dayKey}" data-idx="${i}">✦</button>
         <button class="del" data-role="task-del" data-date="${dayKey}" data-idx="${i}">×</button>
       </div>`).join('');
@@ -1292,6 +1307,20 @@
       <div class="section-label">수업 <button class="add-mini" data-role="class-add" data-date="${dk}">+ 보강 추가</button></div>
       <div class="class-rows">${classHTML}${dsHTML}${slotHTML}${extraHTML}</div>
     </div>`;
+  }
+
+  // 업무 상태: '' 대기 → ing 진행중 → done 완료
+  const ST_ORDER=['','ing','done'];
+  const ST_LABEL={'':'○','ing':'◐','done':'●'};
+  const ST_TITLE={'':'대기','ing':'진행 중','done':'완료'};
+  function statusOf(t){ return t.st || (t.done?'done':''); }
+  function statusBtn(role,attrs,st){
+    return `<button class="st-btn st-${st||'none'}" title="${ST_TITLE[st]||'대기'} (눌러서 변경)" data-role="${role}" ${attrs}>${ST_LABEL[st]||'○'}</button>`;
+  }
+  function nextWorkday(ds){
+    const d=new Date(ds+'T00:00:00');
+    do { d.setDate(d.getDate()+1); } while(d.getDay()===0||d.getDay()===6);
+    return fmtDate(d);
   }
 
   function autoGrow(el){
@@ -1513,6 +1542,33 @@
       saveMarks(); render();
     }
     else if(role==='extra-class-del'){ delete state.swaps[el.dataset.key]; saveMarks(); render(); }
+    else if(role==='task-status'){
+      const t=ensureDayD(el.dataset.date).tasks[+el.dataset.idx];
+      const cur=statusOf(t);
+      t.st=ST_ORDER[(ST_ORDER.indexOf(cur)+1)%ST_ORDER.length];
+      delete t.done;
+      scheduleMonthSave(el.dataset.date); render();
+    }
+    else if(role==='wk-status'){
+      const t=ensureWeek(el.dataset.wk)[+el.dataset.idx];
+      const cur=statusOf(t);
+      t.st=ST_ORDER[(ST_ORDER.indexOf(cur)+1)%ST_ORDER.length];
+      delete t.done;
+      saveWeekly(); render();
+    }
+    else if(role==='task-defer'){
+      const from=el.dataset.date, idx=+el.dataset.idx;
+      const arr=ensureDayD(from).tasks;
+      const item=arr.splice(idx,1)[0];
+      if(item){
+        item.st=''; delete item.done; item.moved=true;
+        const to=nextWorkday(from);
+        ensureMonthLoaded(monthKey(+to.slice(0,4), +to.slice(5,7)-1)).then(()=>{
+          ensureDayD(to).tasks.push(item);
+          scheduleMonthSave(from); scheduleMonthSave(to); render();
+        });
+      }
+    }
     else if(role==='night'){
       const d=el.dataset.date;
       if(state.nightDuty[d]) delete state.nightDuty[d]; else state.nightDuty[d]=true;
@@ -1592,12 +1648,6 @@
       const k=el.dataset.key;
       if(el.checked) state.doneMarks[k]=true; else delete state.doneMarks[k];
       saveMarks(); render();
-    } else if(role==='task-done'){
-      ensureDayD(el.dataset.date).tasks[+el.dataset.idx].done=el.checked;
-      scheduleMonthSave(el.dataset.date); render();
-    } else if(role==='wk-done'){
-      ensureWeek(el.dataset.wk)[+el.dataset.idx].done=el.checked;
-      saveWeekly(); render();
     }
   });
 
