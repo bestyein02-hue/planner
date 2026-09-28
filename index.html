@@ -38,6 +38,7 @@
   .night-summary{font-size:12px;color:var(--ink-30);white-space:nowrap;flex:none;}
   .night-summary.has{color:var(--class-accent);background:var(--class-accent-10);border-radius:12px;padding:4px 11px;}
   .night-summary b{font-weight:700;}
+  .night-summary .ns-short{display:none;}
   .head-right-mini{display:flex;align-items:center;gap:4px;margin-left:auto;}
   .night-btn{border:1px solid var(--ink-10);background:transparent;color:var(--ink-30);font-size:9.5px;
     border-radius:8px;padding:1px 6px;cursor:pointer;font-family:inherit;line-height:14px;flex:none;opacity:.5;}
@@ -151,7 +152,9 @@
   .del:hover{color:var(--holiday);}
   .divider{border:none;border-top:1px solid var(--ink-10);margin:5px 0;}
 
-  .class-rows{display:flex;flex-direction:column;gap:4px;}
+  .class-rows{display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .class-block{min-width:0;}
+  .class-row{min-width:0;}
   .class-block{border-left:3px solid var(--class-accent-10);padding-left:5px;}
   .done-chk{width:12px;height:12px;flex:none;accent-color:var(--class-accent);margin:0;}
   .class-block.lesson-done{background:#F3F3F2;border-left-color:#C4BCAC;opacity:.72;}
@@ -208,7 +211,16 @@
   .extra-row .e-label{width:32%;font-weight:600;color:var(--class-accent);}
   .extra-row .e-text{flex:1;min-width:0;}
 
-  .footnote{margin-top:14px;font-size:11.5px;color:var(--ink-30);line-height:1.7;}
+  .fab-wrap{display:none;}
+  .fab{width:46px;height:46px;border-radius:50%;border:1px solid var(--ink-10);background:var(--card);
+    color:var(--class-accent);box-shadow:0 3px 12px rgba(0,0,0,.14);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;}
+  .fab svg{width:22px;height:22px;}
+  .fab:active{background:var(--class-accent-10);}
+  .footnote{margin-top:16px;font-size:11.5px;color:var(--ink-30);}
+  .help-link{border:1px solid var(--ink-10);background:var(--card);color:var(--ink-60);
+    font-size:12px;padding:5px 14px;border-radius:14px;cursor:pointer;font-family:inherit;}
+  .help-link:hover{border-color:var(--class-accent);color:var(--class-accent);}
 
   .modal-overlay{position:fixed;inset:0;background:rgba(38,34,32,.45);display:none;align-items:center;justify-content:center;z-index:50;}
   .modal-overlay.open{display:flex;}
@@ -255,6 +267,7 @@
     .night-summary{font-size:12px;color:var(--ink-30);white-space:nowrap;flex:none;}
   .night-summary.has{color:var(--class-accent);background:var(--class-accent-10);border-radius:12px;padding:4px 11px;}
   .night-summary b{font-weight:700;}
+  .night-summary .ns-short{display:none;}
   .head-right-mini{display:flex;align-items:center;gap:4px;margin-left:auto;}
   .night-btn{border:1px solid var(--ink-10);background:transparent;color:var(--ink-30);font-size:9.5px;
     border-radius:8px;padding:1px 6px;cursor:pointer;font-family:inherit;line-height:14px;flex:none;opacity:.5;}
@@ -266,7 +279,13 @@
     .btn{padding:0;font-size:17px;flex:none;width:38px;height:34px;line-height:1;
          display:flex;align-items:center;justify-content:center;}
     .btn .lb{display:none;}
-    .night-summary{font-size:11px;}
+    .head-left{flex-wrap:wrap;gap:8px;}
+    .night-summary{font-size:11px;order:3;flex:none;max-width:100%;}
+    .night-summary .ns-long{display:none;}
+    .night-summary .ns-short{display:inline;}
+    .night-summary.has{padding:3px 9px;}
+    .fab-wrap{display:flex;flex-direction:column;gap:10px;position:fixed;right:14px;
+      bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;}
     .night-btn{font-size:11px;padding:2px 8px;}
     .btn svg.ic{display:block;width:19px;height:19px;}
     #printMode{width:auto;flex:1;min-width:0;font-size:12px;height:34px;padding:0 6px;}
@@ -304,6 +323,22 @@
     .slot-select{font-size:14px;padding:5px;}
     .slot-note{font-size:14px;padding:5px 6px;}
     .class-rows{gap:8px;}
+    /* 좁은 화면에서 한 줄이 넘치지 않도록 */
+    .day-cell{overflow:hidden;}
+    .day-head{flex-wrap:wrap;}
+    .head-right-mini{flex-wrap:wrap;justify-content:flex-end;gap:5px;}
+    .class-row{flex-wrap:wrap;gap:5px;align-items:center;}
+    .class-row > *{max-width:100%;}
+    .cls-pick{width:auto;min-width:46px;max-width:72px;}
+    .period-badge{width:auto;min-width:34px;}
+    .period-pick{width:auto;min-width:52px;}
+    .reason-select{margin-left:auto;max-width:96px;flex:none;}
+    .bulk-select{max-width:86px;}
+    .end-toggle{flex:none;}
+    .slot-select{flex:1 1 100%;min-width:0;}
+    .extra-row{flex-wrap:nowrap;}
+    .extra-row .e-label{width:34%;min-width:0;}
+    select,input,textarea{max-width:100%;box-sizing:border-box;}
     .footnote{font-size:12px;}
     .modal{padding:16px 14px 20px;width:96vw;max-height:90vh;}
     .tab-btn{padding:7px 8px;font-size:12px;}
@@ -360,10 +395,16 @@
 
   <div class="grid-scroll"><div class="calendar-grid" id="calendarGrid"></div></div>
 
-  <div class="footnote">
-    반 이름을 클릭하면 그날만 다른 반으로 바꾸거나 "빈 시간"으로 비울 수 있습니다. 비운 자리는 빗금과 함께 "빈 시간"으로 남고, 그 아래 메모칸에 누구와 언제 교체했는지 적어둘 수 있습니다. "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
-    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 수업 왼쪽 체크박스로 진행한 수업을 표시하면 취소선이 그어지고 아래로 내려갑니다. 업무·주간 목표도 완료하면 아래로 내려가요. ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 업무·주간 목표 항목은 끌어서 다른 날짜로 옮길 수 있습니다 (일요일 칸에 놓으면 그 주의 주간 목표가 됩니다). 오른쪽 위 "월 / 주" 버튼으로 한 달 전체 보기와 한 주만 크게 보기를 오갈 수 있습니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
+  <div class="fab-wrap no-print">
+    <button class="fab" id="fabToday" title="오늘로">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="12" cy="15" r="2.2" fill="currentColor" stroke="none"/></svg>
+    </button>
+    <button class="fab" id="fabTop" title="맨 위로">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V7"/><path d="M6 12l6-6 6 6"/></svg>
+    </button>
   </div>
+
+  <div class="footnote"><button class="help-link no-print" id="helpBtn">사용법 보기</button></div>
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
@@ -375,7 +416,7 @@
       <button class="tab-btn" data-tab="event">학사일정</button>
       <button class="tab-btn" data-tab="slot">고정 일정</button>
       <button class="tab-btn" data-tab="term">분기</button>
-      <button class="tab-btn" data-tab="help">백업·도움말</button>
+      <button class="tab-btn" data-tab="help">사용법·백업</button>
     </div>
 
     <div class="tab-panel active" id="panel-tt">
@@ -438,6 +479,11 @@
     </div>
 
     <div class="tab-panel" id="panel-help">
+      <h3 style="font-size:14px;margin:0 0 8px">사용법</h3>
+      <div class="curr-hint" style="margin:0 0 16px;font-size:12.5px;color:var(--ink-60);line-height:1.8">
+        반 이름을 클릭하면 그날만 다른 반으로 바꾸거나 "빈 시간"으로 비울 수 있습니다. 비운 자리는 빗금과 함께 "빈 시간"으로 남고, 그 아래 메모칸에 누구와 언제 교체했는지 적어둘 수 있습니다. "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
+    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 수업 왼쪽 체크박스로 진행한 수업을 표시하면 취소선이 그어지고 아래로 내려갑니다. 업무·주간 목표도 완료하면 아래로 내려가요. ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 업무·주간 목표 항목은 끌어서 다른 날짜로 옮길 수 있습니다 (일요일 칸에 놓으면 그 주의 주간 목표가 됩니다). 오른쪽 위 "월 / 주" 버튼으로 한 달 전체 보기와 한 주만 크게 보기를 오갈 수 있습니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
+      </div>
       <h3 style="font-size:14px;margin:0 0 8px">백업 저장 / 불러오기</h3>
       <div class="curr-hint" style="margin:0 0 16px;font-size:12.5px;color:var(--ink-60)">
         상단 <b>백업 저장</b>을 누르면 설정·시간표·진도·학사일정·결손·업무 메모·주간 목표까지 전부 담긴 JSON 파일 하나가 다운로드됩니다. 파일명에 날짜가 붙습니다 (예: 다이어리백업_20260903.json).<br><br>
@@ -1375,8 +1421,9 @@
     const ns=document.getElementById('nightSummary');
     if(ns){
       ns.innerHTML = cnt
-        ? `<b>야자감독 ${cnt}회</b> · ${hrs}시간 · <b>${pay.toLocaleString('ko-KR')}원</b>`
-        : `<span class="dim">야자감독 없음</span>`;
+        ? `<span class="ns-long"><b>야자감독 ${cnt}회</b> · ${hrs}시간 · <b>${pay.toLocaleString('ko-KR')}원</b></span>`
+          + `<span class="ns-short"><b>야자 ${cnt}회</b> · ${pay.toLocaleString('ko-KR')}원</span>`
+        : `<span class="ns-long dim">야자감독 없음</span><span class="ns-short dim">야자 0</span>`;
       ns.className='night-summary'+(cnt?' has':'');
     }
     grid.classList.toggle('week-view',isWeek);
@@ -1618,6 +1665,20 @@
     const c=document.getElementById('todayCell');
     if(c&&c.scrollIntoView) c.scrollIntoView({behavior:'smooth',block:'center'});
   };
+  (function(){
+    const top=document.getElementById('fabTop'), td=document.getElementById('fabToday');
+    if(top) top.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+    if(td) td.onclick=async()=>{
+      flushMonthSave();
+      const t=new Date();
+      state.year=t.getFullYear(); state.month=t.getMonth();
+      state.weekStart=fmtDate(weekStartOf(t));
+      await render();
+      const c=document.getElementById('todayCell');
+      if(c&&c.scrollIntoView) c.scrollIntoView({behavior:'smooth',block:'center'});
+    };
+  })();
+
   document.getElementById('printBtn').onclick=()=>{
     const src=document.getElementById('calendarGrid');
     if(!src) return;
@@ -1748,6 +1809,16 @@
     if(mi) mi.value=evMonth;
     renderEvents(); renderAssess();
     overlay.classList.add('open');
+  };
+  const helpBtn=document.getElementById('helpBtn');
+  if(helpBtn) helpBtn.onclick=()=>{
+    document.getElementById('settingsBtn').onclick();
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+    const b=Array.from(document.querySelectorAll('.tab-btn')).find(x=>x.dataset.tab==='help');
+    if(b) b.classList.add('active');
+    const pnl=document.getElementById('panel-help');
+    if(pnl) pnl.classList.add('active');
   };
   document.getElementById('modalClose').onclick=closeModal;
   overlay.onclick=e=>{ if(e.target===overlay) closeModal(); };
@@ -2043,10 +2114,18 @@
       else { sb.textContent='이 브라우저에만 저장'; }
     }
     await loadAll();
-    if(state.viewMode==='week' && !state.weekStart) state.weekStart=fmtDate(weekStartOf(new Date()));
+    // 열 때는 언제나 오늘이 속한 달·주로
+    const t0=new Date();
+    state.year=t0.getFullYear(); state.month=t0.getMonth();
+    state.weekStart=fmtDate(weekStartOf(t0));
     document.getElementById('viewMonth').classList.toggle('active',state.viewMode!=='week');
     document.getElementById('viewWeek').classList.toggle('active',state.viewMode==='week');
-    render();
+    await render();
+    // 오늘 칸이 먼저 보이도록
+    setTimeout(()=>{
+      const c=document.getElementById('todayCell');
+      if(c&&c.scrollIntoView) c.scrollIntoView({block:'center',inline:'center'});
+    },120);
   })();
 })();
 </script>
