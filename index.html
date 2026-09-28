@@ -765,19 +765,16 @@
       state.gymAuto=true;
       setTimeout(()=>{ saveBase(); saveMarks(); },600);
     }
-    if(!state.sportSlot){
+    // 기본 고정 일정 항목은 열 때마다 확인해서 채워 넣는다
+    (function ensureDefaultSlots(){
       if(!state.slots) state.slots=[];
-      state.slots.forEach(x=>{
-        if(x.day==='wed' && +x.period===7){
-          x.options=x.options||[];
-          if(!x.options.includes('직원체육')) x.options.push('직원체육');
-        }
+      DEFAULT_SLOTS.forEach(def=>{
+        const hit=state.slots.find(x=>x.day===def.day && +x.period===+def.period);
+        if(!hit){ state.slots.push(JSON.parse(JSON.stringify(def))); return; }
+        hit.options=hit.options||[];
+        def.options.forEach(o=>{ if(!hit.options.includes(o)) hit.options.push(o); });
       });
-      if(!state.slots.some(x=>x.day==='fri' && +x.period===7))
-        state.slots.push({day:'fri',period:7,options:['직원체육','직원회의']});
-      state.sportSlot=true;
-      setTimeout(saveBase,500);
-    }
+    })();
     if(!state.progMark){
       Object.keys(state.curriculum||{}).forEach(tid=>{
         const byClass=state.curriculum[tid]||{};
