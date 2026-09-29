@@ -48,6 +48,7 @@
   .subtitle-input{border:none;background:transparent;font-size:14px;color:var(--ink-60);border-bottom:1px dashed var(--ink-30);padding:2px 0;width:220px;}
   .subtitle-input:focus{outline:none;border-bottom-color:var(--ink);}
   .head-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+  .head-btns{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .btn{border:1px solid var(--ink);background:var(--card);padding:6px 14px;font-size:13px;border-radius:4px;cursor:pointer;color:var(--ink);}
   .btn{display:inline-flex;align-items:center;gap:6px;}
   .btn svg.ic{display:none;width:17px;height:17px;flex:none;}
@@ -291,39 +292,29 @@
   .wd-label{display:none;}
 
   @media (max-width:760px){
-    body{padding:14px 10px 40px;}
-    .head{padding-bottom:12px;margin-bottom:12px;gap:10px;}
-    .head-left{gap:8px;width:100%;}
-    .month-title{font-size:26px;}
-    .night-summary{font-size:12px;color:var(--ink-30);white-space:nowrap;flex:none;}
-  .night-summary.has{color:var(--class-accent);background:var(--class-accent-10);border-radius:12px;padding:4px 11px;}
-  .night-summary b{font-weight:700;}
-  .night-summary .ns-short{display:none;}
-  .head-right-mini{display:flex;align-items:center;gap:4px;margin-left:auto;}
-  .night-btn{border:1px solid var(--ink-10);background:transparent;color:var(--ink-30);font-size:9.5px;
-    border-radius:8px;padding:1px 6px;cursor:pointer;font-family:inherit;line-height:14px;flex:none;opacity:.5;}
-  .night-btn:hover{opacity:1;border-color:var(--class-accent);color:var(--class-accent);}
-  .night-btn.on{opacity:1;background:var(--class-accent);border-color:var(--class-accent);color:#fff;font-weight:700;}
-  .day-cell:has(.night-btn.on){box-shadow:inset 3px 0 0 var(--class-accent);}
-  .subtitle-input{width:100%;order:5;}
-    .head-right{width:100%;gap:6px;justify-content:flex-start;align-items:center;}
-    .head-right{flex-wrap:nowrap;gap:6px;justify-content:flex-end;}
-    .btn{padding:0;font-size:16px;flex:none;width:44px;height:34px;line-height:1;
-         display:flex;align-items:center;justify-content:center;}
-    .btn .lb{display:none;}
-    /* 오늘 단추와 인쇄 분량은 화면 아래 동그란 단추·PC에서 쓰므로 숨김 */
-    #todayBtn,#printMode,#printBtn,#exportBtn,#importBtn{display:none;}
-    .head-left{flex-wrap:wrap;gap:8px;}
-    .night-summary{font-size:11px;order:3;flex:none;max-width:100%;}
+    body{padding:12px 10px 40px;}
+
+    /* ── 상단 두 줄로 정리 ── */
+    .head{padding-bottom:10px;margin-bottom:12px;gap:8px;align-items:center;}
+    .head-left{width:100%;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0;}
+    .month-title{font-size:23px;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+    .nav-btn{width:30px;height:30px;flex:none;font-size:15px;}
+    .night-summary{margin-left:auto;font-size:11px;flex:none;}
     .night-summary .ns-long{display:none;}
     .night-summary .ns-short{display:inline;}
     .night-summary.has{padding:3px 9px;}
-    .fab-wrap{display:flex;flex-direction:column;gap:10px;position:fixed;right:14px;
-      bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;}
-    .night-btn{font-size:11px;padding:2px 8px;}
-    .btn svg.ic{display:block;width:19px;height:19px;}
-    .save-flag{min-width:auto;flex:none;font-size:11px;}
-    .store-badge{font-size:10px;padding:2px 6px;}
+
+    .head-right{width:100%;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;justify-content:space-between;}
+    .viewswitch{flex:none;}
+    .vbtn{padding:6px 15px;font-size:13px;}
+    .btn{padding:0;font-size:16px;flex:none;width:44px;height:34px;line-height:1;
+         display:flex;align-items:center;justify-content:center;}
+    .btn .lb{display:none;}
+    .btn svg.ic{display:block;width:18px;height:18px;}
+    #todayBtn,#printMode,#printBtn,#exportBtn,#importBtn,#storeBadge{display:none;}
+    .head-btns{display:flex;gap:6px;margin-left:auto;}
+    .save-flag{min-width:0;flex:none;font-size:11px;text-align:right;}
+
     .weekday-row{display:none;}
     .grid-scroll{overflow-x:visible;}
     .calendar-grid{display:block;min-width:0;border:none;background:transparent;}
@@ -410,6 +401,7 @@
         <button class="vbtn active" id="viewMonth">월</button>
         <button class="vbtn" id="viewWeek">주</button>
       </div>
+      <span class="head-btns">
       <button class="btn" id="ideaBtn" title="내년 담임 아이디어"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg><span class="lb">아이디어</span></button>
       <button class="btn" id="settingsBtn" title="설정"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="lb">설정</span></button>
       <button class="btn" id="todayBtn" title="오늘"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="12" cy="15" r="2.2" fill="currentColor" stroke="none"/></svg><span class="lb">오늘</span></button>
@@ -422,6 +414,7 @@
         <option value="2">2주씩 (3장)</option>
       </select>
       <button class="btn" id="printBtn" title="인쇄"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V3h10v5"/><rect x="3" y="8" width="18" height="8" rx="2"/><rect x="7" y="14" width="10" height="7" rx="1"/></svg><span class="lb">인쇄</span></button>
+      </span>
       <span class="store-badge" id="storeBadge" title="저장 위치"></span>
       <span class="save-flag" id="saveFlag"></span>
     </div>
