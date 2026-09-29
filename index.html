@@ -303,6 +303,8 @@
     .night-summary .ns-long{display:none;}
     .night-summary .ns-short{display:inline;}
     .night-summary.has{padding:3px 9px;}
+    .fab-wrap{display:flex;flex-direction:column;gap:10px;position:fixed;right:14px;
+      bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;}
 
     .head-right{width:100%;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;justify-content:space-between;}
     .viewswitch{flex:none;}
@@ -1678,7 +1680,7 @@
       const arr=ensureDayD(from).tasks;
       const item=arr.splice(idx,1)[0];
       if(item){
-        item.st=''; delete item.done; item.moved=true;
+        item.st=statusOf(item); delete item.done; item.moved=true;
         const to=nextWorkday(from);
         ensureMonthLoaded(monthKey(+to.slice(0,4), +to.slice(5,7)-1)).then(()=>{
           ensureDayD(to).tasks.push(item);
@@ -1760,6 +1762,10 @@
       if(el.value) state.picks[k]=el.value;
       else if(auto) state.picks[k]='__none__';
       else delete state.picks[k];
+      saveMarks(); render();
+    } else if(role==='prep-check'){
+      const k=el.dataset.key;
+      if(el.checked) state.prepChecks[k]=true; else delete state.prepChecks[k];
       saveMarks(); render();
     } else if(role==='lesson-done'){
       const k=el.dataset.key;
