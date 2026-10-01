@@ -242,14 +242,22 @@
   .fab svg{width:22px;height:22px;}
   .fab:active{background:var(--class-accent-10);}
   .footnote{margin-top:16px;font-size:11.5px;color:var(--ink-30);}
-  .idea-list{display:flex;flex-direction:column;gap:8px;}
-  .idea-row{display:flex;gap:7px;align-items:flex-start;}
-  .idea-row .drag{color:var(--ink-30);font-size:12px;padding-top:9px;}
-  .idea-row textarea{flex:1;min-width:0;border:1px solid var(--ink-10);border-radius:5px;padding:8px 10px;
-    font-family:inherit;font-size:13.5px;line-height:1.65;resize:none;overflow:hidden;background:var(--card);color:var(--ink);}
-  .idea-row textarea:focus{outline:1px solid var(--class-accent);}
-  .idea-row .del{padding-top:8px;}
-  .idea-empty{color:var(--ink-30);font-size:13px;padding:14px 2px;}
+  .idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:9px;}
+  .idea-card{position:relative;border-radius:7px;padding:10px 11px;font-size:12.5px;line-height:1.55;
+    cursor:text;min-height:70px;border:1px solid rgba(0,0,0,.06);box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .idea-card.tone0{background:#FFF8D9;}
+  .idea-card.tone1{background:#E8F3E6;}
+  .idea-card.tone2{background:#FBEDE6;}
+  .idea-card.tone3{background:#E9EFF7;}
+  .idea-card.editing{box-shadow:0 0 0 2px var(--class-accent);}
+  .idea-text{white-space:pre-wrap;word-break:break-word;color:var(--ink);}
+  .idea-ph{color:var(--ink-30);font-style:italic;}
+  .idea-card textarea{width:100%;border:none;background:transparent;font-family:inherit;font-size:12.5px;
+    line-height:1.55;color:var(--ink);resize:none;overflow:hidden;outline:none;padding:0;}
+  .idea-del{position:absolute;top:1px;right:3px;border:none;background:none;color:var(--ink-30);
+    cursor:pointer;font-size:13px;opacity:0;transition:opacity .12s;padding:2px 4px;}
+  .idea-card:hover .idea-del,.idea-card.editing .idea-del{opacity:1;}
+  .idea-empty{color:var(--ink-30);font-size:13px;padding:14px 2px;grid-column:1/-1;}
   .help-link{border:1px solid var(--ink-10);background:var(--card);color:var(--ink-60);
     font-size:12px;padding:5px 14px;border-radius:14px;cursor:pointer;font-family:inherit;}
   .help-link:hover{border-color:var(--class-accent);color:var(--class-accent);}
@@ -445,7 +453,7 @@
   <div class="modal" style="width:min(620px,94vw)">
     <div class="modal-head"><h2>내년 담임할 때 쓸 아이디어</h2><button class="modal-close" id="ideaClose">×</button></div>
     <div class="curr-hint" style="margin:0 0 12px">학급 운영, 상담, 행사, 수업 등 떠오를 때마다 적어두세요. 여러 줄을 한꺼번에 붙여넣으면 줄마다 하나씩 나뉩니다. 달력 데이터와 따로 저장되고 백업에도 같이 담깁니다.</div>
-    <div id="ideaList" class="idea-list"></div>
+    <div id="ideaList" class="idea-grid"></div>
     <div style="margin-top:12px"><button class="copy-btn" id="ideaAddBtn">+ 아이디어 추가</button></div>
   </div>
 </div>
@@ -1985,38 +1993,58 @@
   };
   // ---------- 아이디어 메모 ----------
   const ideaOverlay=document.getElementById('ideaOverlay');
-  function growIdea(el){ if(!el) return; el.style.height='auto'; el.style.height=(el.scrollHeight||20)+'px'; }
+  function growIdea(el){ if(!el) return; el.style.height='auto'; el.style.height=Math.max(el.scrollHeight||0,46)+'px'; }
+  let ideaEdit=null;
   function renderIdeas(){
     const box=document.getElementById('ideaList');
     if(!box) return;
-    if(!state.ideas||!state.ideas.length){
-      box.innerHTML='<div class="idea-empty">아직 적어둔 아이디어가 없습니다.</div>';
+    if(!state.ideas) state.ideas=[];
+    if(!state.ideas.length){
+      box.className='idea-grid';
+      box.innerHTML='<div class="idea-empty">아직 적어둔 아이디어가 없습니다. 아래 단추로 추가하세요.</div>';
       return;
     }
-    box.innerHTML=state.ideas.map((t,i)=>`
-      <div class="idea-row">
-        <span class="drag">•</span>
-        <textarea rows="1" data-idea="${i}" placeholder="아이디어">${esc(t)}</textarea>
-        <button class="del" data-idea-del="${i}">×</button>
-      </div>`).join('');
-    box.querySelectorAll('textarea').forEach(t=>{
-      growIdea(t);
-      t.oninput=()=>{
-        const idx=+t.dataset.idea;
-        if(t.value.indexOf('\n')>=0){
-          const parts=t.value.split('\n').map(x=>x.trim()).filter(Boolean);
+    box.className='idea-grid';
+    box.innerHTML=state.ideas.map((t,i)=>{
+      const edit=(ideaEdit===i);
+      return `<div class="idea-card tone${i%4} ${edit?'editing':''}" data-idea-open="${i}">
+        <button class="idea-del" title="삭제" data-idea-del="${i}">×</button>
+        ${edit
+          ? `<textarea data-idea="${i}" placeholder="아이디어를 적어보세요">${esc(t)}</textarea>`
+          : `<div class="idea-text">${t?esc(t):'<span class="idea-ph">비어 있음 — 눌러서 쓰기</span>'}</div>`}
+      </div>`;
+    }).join('');
+
+    box.querySelectorAll('[data-idea-del]').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      state.ideas.splice(+b.dataset.ideaDel,1);
+      ideaEdit=null; saveIdeas(); renderIdeas();
+    });
+    box.querySelectorAll('[data-idea-open]').forEach(c=>c.onclick=()=>{
+      const i=+c.dataset.ideaOpen;
+      if(ideaEdit===i) return;
+      ideaEdit=i; renderIdeas();
+      const t=box.querySelector('textarea[data-idea="'+i+'"]');
+      if(t){ growIdea(t); t.focus(); t.setSelectionRange(t.value.length,t.value.length); }
+    });
+    const ta=box.querySelector('textarea');
+    if(ta){
+      growIdea(ta);
+      ta.oninput=()=>{
+        const idx=+ta.dataset.idea;
+        if(ta.value.indexOf('\n')>=0){
+          const parts=ta.value.split('\n').map(x=>x.trim()).filter(Boolean);
           state.ideas.splice(idx,1,...(parts.length?parts:['']));
-          saveIdeas(); renderIdeas(); return;
+          ideaEdit=null; saveIdeas(); renderIdeas(); return;
         }
-        growIdea(t); state.ideas[idx]=t.value; saveIdeas();
+        growIdea(ta); state.ideas[idx]=ta.value; saveIdeas();
       };
-    });
-    box.querySelectorAll('[data-idea-del]').forEach(b=>b.onclick=()=>{
-      state.ideas.splice(+b.dataset.ideaDel,1); saveIdeas(); renderIdeas();
-    });
+      ta.onblur=()=>{ ideaEdit=null; saveIdeas(); renderIdeas(); };
+    }
   }
+
   const ideaBtn=document.getElementById('ideaBtn');
-  if(ideaBtn) ideaBtn.onclick=()=>{ renderIdeas(); ideaOverlay.classList.add('open'); };
+  if(ideaBtn) ideaBtn.onclick=()=>{ ideaOverlay.classList.add('open'); setTimeout(renderIdeas,0); };
   const ideaClose=document.getElementById('ideaClose');
   if(ideaClose) ideaClose.onclick=()=>ideaOverlay.classList.remove('open');
   if(ideaOverlay) ideaOverlay.onclick=e=>{ if(e.target===ideaOverlay) ideaOverlay.classList.remove('open'); };
@@ -2024,10 +2052,8 @@
   if(ideaAdd) ideaAdd.onclick=()=>{
     if(!state.ideas) state.ideas=[];
     state.ideas.push('');
+    ideaEdit=state.ideas.length-1;
     saveIdeas(); renderIdeas();
-    const box=document.getElementById('ideaList');
-    const last=box&&box.querySelector('.idea-row:last-child textarea');
-    if(last&&last.focus) last.focus();
   };
 
   const helpBtn=document.getElementById('helpBtn');
