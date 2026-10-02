@@ -1474,7 +1474,6 @@
           <input type="checkbox" class="done-chk" title="수업 완료" data-role="lesson-done" data-key="${escAttr(key)}" ${isDone?'checked':''}>
           ${periodCtl}
           ${classSelectHTML(dk,p,a.className,a.swapped)}
-          ${a.reason?`<span class="seq-badge">${esc(a.reason)}</span>`:''}
           ${a.reason?'':`<button class="end-toggle ${a.last?'on':''}" title="이 반의 진도 마지막 차시로 표시" data-role="end-mark" data-key="${escAttr(key)}">끝</button>`}
           ${reasonSelectHTML(key,a.reason,dayReason)}
           ${a.isExtra?`<button class="del" data-role="extra-class-del" data-key="${dk}|${p}">×</button>`:''}
