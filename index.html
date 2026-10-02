@@ -202,6 +202,9 @@
   .prep-box.overdue-box .prep-head{color:#A05B3B;}
   .od-item{display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;}
   .od-date{color:var(--ink-30);flex:none;}
+  .od-sec{font-size:10.5px;font-weight:700;color:#A05B3B;opacity:.75;margin:4px 0 1px;letter-spacing:.3px;}
+  .od-sec:first-child{margin-top:0;}
+  .od-kind{font-size:10px;font-weight:700;color:#A05B3B;background:#F6E2D8;border-radius:5px;padding:0 5px;margin-right:2px;}
   .od-text{flex:1;min-width:0;word-break:break-word;}
   .od-pull{border:1px solid #D9B5A2;background:#fff;color:#A05B3B;font-size:9px;border-radius:7px;
     padding:1px 6px;cursor:pointer;font-family:inherit;flex:none;}
@@ -1324,6 +1327,26 @@
     return out;
   }
 
+  function overduePrep(){
+    const out=[];
+    const t=new Date(TODAY_STR+'T00:00:00');
+    const start=new Date(t.getFullYear(),t.getMonth()-1,1);   // 지난달 1일부터
+    const d=new Date(start);
+    while(fmtDate(d)<TODAY_STR){
+      const ds=fmtDate(d);
+      const kinds=[];
+      const ek=prepKindFor(ds); if(ek) kinds.push(ek);
+      if(isMonthEndPrep(ds)) kinds.push('월말');
+      kinds.forEach(kind=>{
+        ((state.prep&&state.prep[kind])||[]).forEach((it,i)=>{
+          if(!state.prepChecks[`${ds}|${kind}|${i}`]) out.push({ds,kind,i,text:it});
+        });
+      });
+      d.setDate(d.getDate()+1);
+    }
+    return out;
+  }
+
   function weekGoalHTML(sunDate){
     const wk=fmtDate(sunDate), items=ensureWeek(wk);
     const mon=new Date(sunDate); mon.setDate(mon.getDate()+1);
@@ -1534,19 +1557,29 @@
       ${(function(){
         if(dk!==TODAY_STR) return '';
         const od=overdueTasks();
-        if(!od.length) return '';
+        const op=overduePrep();
+        const total=od.length+op.length;
+        if(!total) return '';
         const open=!!state.prepOpen['overdue'];
         return `<div class="prep-box overdue-box">
           <button class="prep-head" data-role="prep-toggle" data-key="overdue">
-            <span>지난 미완료 ${od.length}건</span>
+            <span>지난 미완료 ${total}건</span>
             <span class="prep-arrow">${open?'▾':'▸'}</span>
           </button>
-          ${open?`<div class="prep-list">${od.map(o=>`
-            <div class="od-item">
-              <span class="od-date">${o.ds.slice(5).replace('-','/')}</span>
-              <span class="od-text">${esc(o.t.text)}</span>
-              <button class="od-pull" title="오늘로 가져오기" data-role="od-pull" data-from="${o.ds}" data-idx="${o.i}">오늘로</button>
-            </div>`).join('')}</div>`:''}
+          ${open?`<div class="prep-list">
+            ${od.length?`<div class="od-sec">업무</div>`+od.map(o=>`
+              <div class="od-item">
+                <span class="od-date">${o.ds.slice(5).replace('-','/')}</span>
+                <span class="od-text">${esc(o.t.text)}</span>
+                <button class="od-pull" title="오늘로 가져오기" data-role="od-pull" data-from="${o.ds}" data-idx="${o.i}">오늘로</button>
+              </div>`).join(''):''}
+            ${op.length?`<div class="od-sec">챙길 것</div>`+op.map(o=>`
+              <div class="od-item">
+                <span class="od-date">${o.ds.slice(5).replace('-','/')}</span>
+                <span class="od-text"><span class="od-kind">${esc(o.kind==='월말'?'월말':o.kind)}</span> ${esc(o.text)}</span>
+                <button class="od-pull" title="했어요" data-role="od-prep-done" data-key="${o.ds}|${o.kind}|${o.i}">완료</button>
+              </div>`).join(''):''}
+          </div>`:''}
         </div>`;
       })()}
       <div class="section-label">업무 <button class="add-mini" data-role="task-add" data-date="${dayKey}">+ 추가</button></div>
@@ -1852,6 +1885,10 @@
       t.st=ST_ORDER[(ST_ORDER.indexOf(cur)+1)%ST_ORDER.length];
       delete t.done;
       saveWeekly(); render();
+    }
+    else if(role==='od-prep-done'){
+      state.prepChecks[el.dataset.key]=true;
+      saveMarks(); render();
     }
     else if(role==='od-pull'){
       const from=el.dataset.from, idx=+el.dataset.idx;
