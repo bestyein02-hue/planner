@@ -182,7 +182,9 @@
   .moved-tag{font-size:10px;color:var(--class-accent);flex:none;opacity:.8;}
   .task-item input[type=text],.task-item textarea{border:none;background:transparent;font-size:13.5px;flex:1;min-width:0;padding:1px 0;font-family:inherit;color:var(--ink);resize:none;overflow:hidden;line-height:1.45;}
   .task-item input[type=text]:focus,.task-item textarea:focus{outline:none;background:#F7F7F6;}
-  .task-item.done input[type=text],.task-item.done textarea{text-decoration:line-through;color:var(--ink-30);}
+  .task-item.done input[type=text],.task-item.done textarea{text-decoration:line-through;text-decoration-color:rgba(0,0,0,.2);color:#B0AEA8;font-weight:400;}
+  .task-item.done{opacity:.85;}
+  .task-item.done .st-btn{opacity:.7;}
   .hl-btn{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:11px;padding:0 2px;flex:none;opacity:.55;}
   .hl-btn:hover{opacity:1;}
   .hl-btn[style*='background']{opacity:1;}
@@ -460,6 +462,12 @@
     .month-title{font-size:26px;}
     .calendar-grid,.weekday-row{grid-template-columns:0.9fr 1.15fr 1.15fr 1.15fr 1.15fr 1.15fr 0.55fr;min-width:0;}
   }
+  /* 완료한 업무·주간 목표는 옅게 (다른 규칙보다 우선) */
+  .day-cell .task-item.done textarea,
+  .day-cell .task-item.wk-item.done textarea,
+  .calendar-grid.week-view .task-item.done textarea{
+    color:#B0AEA8 !important;font-weight:400 !important;
+    text-decoration:line-through;text-decoration-color:rgba(0,0,0,.2);}
 </style>
 </head>
 <body>
