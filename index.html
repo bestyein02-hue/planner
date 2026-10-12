@@ -19,7 +19,7 @@
 
 <style>
   :root{
-    --cols:0.95fr 1.2fr 1.2fr 1.2fr 1.2fr 1.2fr 0.55fr;
+    --cols:minmax(0,.5fr) repeat(5,minmax(0,1.2fr)) minmax(0,.5fr);
     --paper:#FAFAF9; --card:#FFFFFF; --card-dim:#F5F5F4;
     --ink:#1A1A19; --ink-60:#5C5B59; --ink-30:#A8A7A4; --ink-10:#E8E7E5;
     --holiday:#BE5A45; --sat:#5878A8;
@@ -87,11 +87,11 @@
   .vbtn svg{width:16px;height:16px;flex:none;}
   .vbtn:hover{color:var(--class-accent);}
   .vbtn.active{background:var(--class-accent);color:#fff;}
-  .weekday-row{display:grid;grid-template-columns:var(--cols);gap:7px;margin-bottom:6px;min-width:1340px;}
+  .weekday-row{display:grid;grid-template-columns:var(--cols);gap:7px;margin-bottom:6px;min-width:0;}
   .weekday-row .wd{text-align:center;font-size:12.5px;font-weight:700;padding:7px 0;color:var(--ink-30);letter-spacing:.08em;}
   .weekday-row .wd.sun{color:var(--holiday);} .weekday-row .wd.sat{color:var(--sat);}
   .grid-scroll{overflow-x:auto;}
-  .calendar-grid{display:grid;grid-template-columns:var(--cols);gap:7px;background:transparent;border:none;min-width:1340px;}
+  .calendar-grid{display:grid;grid-template-columns:var(--cols);gap:7px;background:transparent;border:none;min-width:0;}
 
   .day-cell{background:var(--card);min-height:268px;display:flex;flex-direction:column;padding:11px 12px;
     border:1px solid var(--ink-10);border-radius:10px;box-shadow:0 1px 2px rgba(20,20,18,.04);transition:box-shadow .15s,border-color .15s;}
@@ -654,6 +654,36 @@
   .bk-link{text-decoration:none;display:inline-flex;align-items:center;}
   .bk-skip{border:none;background:none;color:var(--ink-30);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;}
   @media print{ .bk-banner{display:none !important;} }
+  /* ── 그 주 위의 주간 목표 띠 ── */
+  .week-strip{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;
+    background:var(--class-accent-10);border:1px solid var(--ink-10);border-radius:14px;
+    padding:8px 14px 9px;margin-top:6px;}
+  .calendar-grid > .week-strip:first-child{margin-top:0;}
+  .week-strip .wk-title{margin:0;font-size:13.5px !important;color:var(--class-accent);}
+  .week-strip .wk-range{margin:0;font-size:12px;}
+  .week-strip .section-label{margin:0 0 0 auto;}
+  .week-strip .task-list{flex-basis:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:3px 18px;}
+  .week-strip.drop-hover{outline:2px dashed var(--class-accent);outline-offset:-3px;}
+  .calendar-grid.week-view .week-strip{padding:11px 16px 12px;}
+  @media (max-width:760px){
+    .week-strip{margin:4px 0 9px;padding:10px 13px;}
+    .week-strip .task-list{grid-template-columns:1fr;}
+  }
+  @media print{ .week-strip{background:#fff;border-color:#ddd;} }
+
+  /* ── 그 차시를 처음 하는 반 ── */
+  .first-tag{font-size:10px;font-weight:700;color:#fff;background:#E2A23B;border-radius:999px;
+    padding:1px 6px;flex:none;letter-spacing:-.2px;}
+  .class-block.first-lesson{box-shadow:inset 0 0 0 1.5px #F0C77E;}
+  .calendar-grid.week-view .first-tag{font-size:11.5px;padding:2px 8px;}
+
+  /* 칸이 내용 때문에 넓어지지 않게 */
+  .day-cell{min-width:0;}
+  .class-row{flex-wrap:wrap;row-gap:3px;}
+  .class-row .reason-select{margin-left:auto;}
+  .head-right-mini{flex-wrap:wrap;justify-content:flex-end;}
+  .task-item textarea{min-width:0;}
+  .day-cell.is-today .day-num .wd-label{display:none !important;}
 </style>
 </head>
 <body>
@@ -1541,7 +1571,7 @@
 
   function simulateUpTo(endDateStr){
     const result={};
-    let counters={}, curTerm=null, manualEnded={};
+    let counters={}, curTerm=null, manualEnded={}, firstSeen={};
     const ts=sortedTerms();
     if(!ts.length) return result;
     let d=new Date(ts[0].start+'T00:00:00');
@@ -1551,7 +1581,7 @@
     while(d<=end && g++<2000){
       const ds=fmtDate(d);
       const t=termOf(ds);
-      if(t && (!curTerm || t.id!==curTerm.id)){ curTerm=t; counters={}; manualEnded={}; }
+      if(t && (!curTerm || t.id!==curTerm.id)){ curTerm=t; counters={}; manualEnded={}; firstSeen={}; }
       const forcedWd=state.dayTT[ds];
       const wdName=forcedWd||WD_KEYS[d.getDay()];
       if(WD_LABELS[wdName] && !HOLIDAYS[ds]){
@@ -1596,6 +1626,11 @@
             }
             result[ds][period]={className,lesson:(key in state.overrides)?state.overrides[key]:auto,
               reason:'',seq:counters[className],swapped,isExtra,over:over,last,afterEnd};
+            // 이 차시를 가장 먼저 하는 반에 표시 (수업 준비용)
+            if(!over){
+              const fk=(curTerm?curTerm.id:'')+'|'+counters[className];   // 같은 분기의 같은 차시 번호
+              if(!firstSeen[fk]){ firstSeen[fk]=true; result[ds][period].first=true; }
+            }
           }
         }
       }
@@ -1788,7 +1823,7 @@
         ${pillsHTML(dk)}
         ${(inMonth&&assess)?`<div class="assess-line">${esc(assess)}</div>`:''}
         ${(inMonth&&ev&&ev.t)?`<div class="event-line">${esc(ev.t)}</div>`:''}
-        ${weekGoalHTML(dObj)}</div>`;
+      </div>`;
     }
     if(!inMonth) return `<div class="day-cell other-month" data-date="${dk}"><div class="day-head"><div class="${numCls}">${dayNum}</div></div>${pillsHTML(dk)}</div>`;
 
@@ -1841,11 +1876,12 @@
         ? `<select class="period-pick" data-role="move-period" data-key="${dk}|${p}" title="교시 변경">${
             emptyPeriodsFor(dk,p).map(n=>`<option value="${n}" ${n===p?'selected':''}>${n}교시</option>`).join('')}</select>`
         : `<span class="seq-badge period-badge">${p}교시</span>`;
-      return `<div class="class-block ${a.reason?'skipped':''} ${a.isExtra?'extra-class':''} ${a.last?'last-lesson':''} ${(a.over||a.afterEnd)?'over-lesson':''} ${isDone?'lesson-done':''}" title="${a.seq?a.seq+'차시':''}">
+      return `<div class="class-block ${a.reason?'skipped':''} ${(a.first&&!a.reason)?'first-lesson':''} ${a.isExtra?'extra-class':''} ${a.last?'last-lesson':''} ${(a.over||a.afterEnd)?'over-lesson':''} ${isDone?'lesson-done':''}" title="${a.seq?a.seq+'차시':''}">
         <div class="class-row">
           <input type="checkbox" class="done-chk" title="수업 완료" data-role="lesson-done" data-key="${escAttr(key)}" ${isDone?'checked':''}>
           ${periodCtl}
           ${classSelectHTML(dk,p,a.className,a.swapped)}
+          ${(a.first&&!a.reason)?'<span class="first-tag" title="이 차시를 처음 하는 반이에요 — 수업 준비!">✦첫</span>':''}
           ${a.reason?'':`<button class="end-toggle ${a.last?'on':''}" title="이 반의 진도 마지막 차시로 표시" data-role="end-mark" data-key="${escAttr(key)}">끝</button>`}
           ${reasonSelectHTML(key,a.reason,dayReason)}
           ${a.isExtra?`<button class="del" data-role="extra-class-del" data-key="${dk}|${p}">×</button>`:''}
@@ -2035,72 +2071,6 @@
     applyTheme();
     const grid=$id('calendarGrid');
 
-  // ---------- 드래그로 항목 옮기기 ----------
-  let dragInfo=null;
-  grid.addEventListener('dragstart',e=>{
-    const item=e.target.closest&&e.target.closest('[data-drag]');
-    if(!item){ return; }
-    dragInfo=item.dataset.drag;
-    try{ e.dataTransfer.setData('text/plain',dragInfo); e.dataTransfer.effectAllowed='move'; }catch(err){}
-    item.classList.add('dragging');
-  });
-  grid.addEventListener('dragend',e=>{
-    dragInfo=null;
-    const d=grid.querySelector('.dragging'); if(d) d.classList.remove('dragging');
-    grid.querySelectorAll('.drop-hover').forEach(x=>x.classList.remove('drop-hover'));
-  });
-  grid.addEventListener('dragover',e=>{
-    const cell=e.target.closest&&e.target.closest('.day-cell[data-date]');
-    if(!cell||!dragInfo) return;
-    e.preventDefault();
-    try{ e.dataTransfer.dropEffect='move'; }catch(err){}
-    if(!cell.classList.contains('drop-hover')){
-      grid.querySelectorAll('.drop-hover').forEach(x=>x.classList.remove('drop-hover'));
-      cell.classList.add('drop-hover');
-    }
-  });
-  grid.addEventListener('dragleave',e=>{
-    const cell=e.target.closest&&e.target.closest('.day-cell');
-    if(cell&&!cell.contains(e.relatedTarget)) cell.classList.remove('drop-hover');
-  });
-  grid.addEventListener('drop',e=>{
-    const cell=e.target.closest&&e.target.closest('.day-cell[data-date]');
-    if(!cell) return;
-    e.preventDefault();
-    let payload=dragInfo;
-    try{ payload=e.dataTransfer.getData('text/plain')||dragInfo; }catch(err){}
-    if(!payload) return;
-    const [kind,src,idxs]=payload.split('|');
-    const idx=+idxs;
-    const toDate=cell.dataset.date;
-    const toWeek=cell.classList.contains('sunday');
-
-    // 원본에서 꺼내기
-    let item=null;
-    if(kind==='t'){
-      const arr=ensureDayD(src).tasks;
-      if(idx<0||idx>=arr.length) return;
-      if(!toWeek && src===toDate) return;
-      item=arr.splice(idx,1)[0];
-      scheduleMonthSave(src);
-    } else {
-      const arr=ensureWeek(src);
-      if(idx<0||idx>=arr.length) return;
-      if(toWeek && src===toDate) return;
-      item=arr.splice(idx,1)[0];
-      saveWeekly();
-    }
-    if(!item) return;
-
-    // 대상에 넣기
-    if(toWeek){ ensureWeek(toDate).push(item); saveWeekly(); }
-    else { ensureDayD(toDate).tasks.push(item); scheduleMonthSave(toDate); }
-
-    dragInfo=null;
-    grid.querySelectorAll('.drop-hover').forEach(x=>x.classList.remove('drop-hover'));
-    render();
-  });
-
     const wk=document.querySelector('.weekday-row');
     const isWeek=state.viewMode==='week';
 
@@ -2143,7 +2113,12 @@
     const assign=simulateUpTo(dateKey(lastCell.y,lastCell.m,lastCell.d));
 
     let html='';
-    cells.forEach(c=>{ html+=buildCell(c.y,c.m,c.d,c.cur,c.cur?assign:{}); });
+    for(let i=0;i<cells.length;i+=7){
+      const c0=cells[i];
+      const sun=new Date(c0.y,c0.m,c0.d);
+      html+=`<div class="week-strip" data-wk="${fmtDate(sun)}">${weekGoalHTML(sun)}</div>`;
+      cells.slice(i,i+7).forEach(c=>{ html+=buildCell(c.y,c.m,c.d,c.cur,c.cur?assign:{}); });
+    }
     grid.innerHTML=html;
     // 이번 달 야자감독 요약
     const ym=`${state.year}-${pad2(state.month+1)}`;
@@ -2186,7 +2161,7 @@
     grid.querySelectorAll('.drop-hover').forEach(x=>x.classList.remove('drop-hover'));
   });
   grid.addEventListener('dragover',e=>{
-    const cell=e.target.closest&&e.target.closest('.day-cell[data-date]');
+    const cell=e.target.closest&&e.target.closest('.week-strip[data-wk], .day-cell[data-date]:not(.sunday):not(.saturday)');
     if(!cell||!dragInfo) return;
     e.preventDefault();
     try{ e.dataTransfer.dropEffect='move'; }catch(err){}
@@ -2196,11 +2171,11 @@
     }
   });
   grid.addEventListener('dragleave',e=>{
-    const cell=e.target.closest&&e.target.closest('.day-cell');
+    const cell=e.target.closest&&e.target.closest('.day-cell, .week-strip');
     if(cell&&!cell.contains(e.relatedTarget)) cell.classList.remove('drop-hover');
   });
   grid.addEventListener('drop',e=>{
-    const cell=e.target.closest&&e.target.closest('.day-cell[data-date]');
+    const cell=e.target.closest&&e.target.closest('.week-strip[data-wk], .day-cell[data-date]:not(.sunday):not(.saturday)');
     if(!cell) return;
     e.preventDefault();
     let payload=dragInfo;
@@ -2208,8 +2183,8 @@
     if(!payload) return;
     const [kind,src,idxs]=payload.split('|');
     const idx=+idxs;
-    const toDate=cell.dataset.date;
-    const toWeek=cell.classList.contains('sunday');
+    const toWeek=cell.classList.contains('week-strip');
+    const toDate=toWeek?cell.dataset.wk:cell.dataset.date;
 
     // 원본에서 꺼내기
     let item=null;
@@ -2644,9 +2619,11 @@
       }
     });
 
-    const cells=Array.from(clone.children);
-    const weeks=[];
-    for(let i=0;i<cells.length;i+=7) weeks.push(cells.slice(i,i+7));
+    const weeks=[]; let curW=null;
+    Array.from(clone.children).forEach(ch=>{
+      if(ch.classList&&ch.classList.contains('week-strip')){ curW=[ch]; weeks.push(curW); }
+      else { if(!curW){ curW=[]; weeks.push(curW); } curW.push(ch); }
+    });
     const chunks=[];
     if(perPage<=0) chunks.push(weeks);
     else for(let i=0;i<weeks.length;i+=perPage) chunks.push(weeks.slice(i,i+perPage));
