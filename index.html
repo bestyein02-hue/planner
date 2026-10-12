@@ -1571,7 +1571,7 @@
 
   function simulateUpTo(endDateStr){
     const result={};
-    let counters={}, curTerm=null, manualEnded={}, firstSeen={};
+    let counters={}, curTerm=null, manualEnded={}, firstSeen={}, textCount={};
     const ts=sortedTerms();
     if(!ts.length) return result;
     let d=new Date(ts[0].start+'T00:00:00');
@@ -1581,7 +1581,7 @@
     while(d<=end && g++<2000){
       const ds=fmtDate(d);
       const t=termOf(ds);
-      if(t && (!curTerm || t.id!==curTerm.id)){ curTerm=t; counters={}; manualEnded={}; firstSeen={}; }
+      if(t && (!curTerm || t.id!==curTerm.id)){ curTerm=t; counters={}; manualEnded={}; firstSeen={}; textCount={}; }
       const forcedWd=state.dayTT[ds];
       const wdName=forcedWd||WD_KEYS[d.getDay()];
       if(WD_LABELS[wdName] && !HOLIDAYS[ds]){
@@ -1628,8 +1628,15 @@
               reason:'',seq:counters[className],swapped,isExtra,over:over,last,afterEnd};
             // 이 차시를 가장 먼저 하는 반에 표시 (수업 준비용)
             if(!over){
-              const fk=(curTerm?curTerm.id:'')+'|'+counters[className];   // 같은 분기의 같은 차시 번호
-              if(!firstSeen[fk]){ firstSeen[fk]=true; result[ds][period].first=true; }
+              // 실제로 그 칸에 보이는 수업 내용 기준 (직접 고친 내용 포함)
+              const shown=(result[ds][period].lesson||'');
+              const norm=shown.replace(/\*\s*$/,'').toLowerCase().replace(/[\s\-,.·\/()\[\]_~]/g,'');
+              if(norm){
+                const tc=(textCount[className]=textCount[className]||{});
+                tc[norm]=(tc[norm]||0)+1;            // 같은 내용이 여러 번 나오면(채점 ×2 등) 몇 번째인지 구분
+                const fk=(curTerm?curTerm.id:'')+'|'+norm+'#'+tc[norm];
+                if(!firstSeen[fk]){ firstSeen[fk]=true; result[ds][period].first=true; }
+              }
             }
           }
         }
