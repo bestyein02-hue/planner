@@ -684,6 +684,15 @@
   .head-right-mini{flex-wrap:wrap;justify-content:flex-end;}
   .task-item textarea{min-width:0;}
   .day-cell.is-today .day-num .wd-label{display:none !important;}
+  .now-dot{font-size:10px;background:#fff;color:var(--class-accent);border-radius:999px;padding:0 5px;margin-left:3px;}
+  .chip:not(.active) .now-dot{background:var(--class-accent-10);}
+  .cls-text-wrap{position:relative;}
+  .cls-text-wrap.is-ov .cls-text{padding-right:24px;border-color:#E8C9A4 !important;background:#FFFBF4 !important;}
+  .ov-reset{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;
+    color:#C8863C;font-size:12px;padding:2px 3px;line-height:1;}
+  .ov-reset:hover{color:var(--holiday);}
+  .class-block.skipped .cls-text-wrap{display:none;}
+  @media print{ .ov-reset{display:none;} }
 </style>
 </head>
 <body>
@@ -894,6 +903,9 @@
           </select>
           <button class="btn" id="printBtn">인쇄용 파일 만들기</button>
         </div>
+        <div class="tool-title" style="margin-top:12px">화면 새로 불러오기</div>
+        <div class="tool-row"><button class="btn" id="reloadBtn">↻ 새로고침</button>
+          <span class="curr-hint" style="margin:0">새 버전을 올렸거나 다른 기기에서 고친 내용을 불러올 때</span></div>
         <div class="tool-title" style="margin-top:12px">수동 백업</div>
         <div class="tool-row">
           <button class="btn" id="exportBtn">백업 파일 저장</button>
@@ -1571,7 +1583,8 @@
 
   function simulateUpTo(endDateStr){
     const result={};
-    let counters={}, curTerm=null, manualEnded={}, firstSeen={}, textCount={};
+    let counters={}, curTerm=null, manualEnded={}, firstSeen={}, textCount={}, ovDirty=false;
+    const nz=x=>String(x||'').replace(/\*\s*$/,'').replace(/\s+/g,'');
     const ts=sortedTerms();
     if(!ts.length) return result;
     let d=new Date(ts[0].start+'T00:00:00');
@@ -1624,7 +1637,9 @@
               list.forEach((x,i)=>{ if(/\*\s*$/.test(x||'')) endIdx=i; });
               afterEnd=(counters[className]-1)>endIdx;
             }
-            result[ds][period]={className,lesson:(key in state.overrides)?state.overrides[key]:auto,
+            let ovVal=(key in state.overrides)?state.overrides[key]:null;
+            if(ovVal!=null && (!String(ovVal).trim() || nz(ovVal)===nz(auto))){ delete state.overrides[key]; ovDirty=true; ovVal=null; }
+            result[ds][period]={className,lesson:(ovVal!=null)?ovVal:auto, overridden:(ovVal!=null),
               reason:'',seq:counters[className],swapped,isExtra,over:over,last,afterEnd};
             // 이 차시를 가장 먼저 하는 반에 표시 (수업 준비용)
             if(!over){
@@ -1643,6 +1658,7 @@
       }
       d.setDate(d.getDate()+1);
     }
+    if(ovDirty) setTimeout(saveMarks,0);
     return result;
   }
 
@@ -1893,7 +1909,10 @@
           ${reasonSelectHTML(key,a.reason,dayReason)}
           ${a.isExtra?`<button class="del" data-role="extra-class-del" data-key="${dk}|${p}">×</button>`:''}
         </div>
-        <input type="text" class="cls-text" data-role="override" data-key="${escAttr(key)}" value="${escAttr(a.lesson)}" placeholder="${a.over?'자습 (진도 끝)':'수업 내용'}">
+        <div class="cls-text-wrap ${a.overridden?'is-ov':''}">
+          <input type="text" class="cls-text" data-role="override" data-key="${escAttr(key)}" value="${escAttr(a.lesson)}" placeholder="${a.over?'자습 (진도 끝)':'수업 내용'}">
+          ${a.overridden?`<button class="ov-reset" data-role="ov-reset" data-key="${escAttr(key)}" title="직접 고친 내용이에요. 누르면 진도 목록대로 돌아갑니다">✎</button>`:''}
+        </div>
         ${(a.isExtra||a.swapped)?swapNoteHTML(dk,p,a.isExtra?'어느 시간 보강인지':'누구와 교체했는지'):''}
       </div>`;
     }).join('');
@@ -2251,6 +2270,10 @@
       t.st=ST_ORDER[(ST_ORDER.indexOf(cur)+1)%ST_ORDER.length];
       delete t.done;
       saveWeekly(); render();
+    }
+    else if(role==='ov-reset'){
+      delete state.overrides[el.dataset.key];
+      saveMarks(); render();
     }
     else if(role==='ev-open'){
       const ev=(state.calEvents||[]).find(x=>x.id===el.dataset.id);
@@ -2722,6 +2745,7 @@
   // ---------- 설정 창 ----------
   const overlay=$id('modalOverlay');
   $id('settingsBtn').onclick=()=>{
+    { const ct=termOf(fmtDate(new Date())); if(ct) activeTerm=ct.id; }
     renderTT(); renderChips(); renderSlots(); renderTerms(); syncNightInputs(); renderThemeChips(); renderSnaps(); renderProgress(); renderArchives();
     const si=$id('subtitleInput'); if(si) si.value=state.subtitle||'';
     evMonth=`${state.year}-${pad2(state.month+1)}`;
@@ -2939,8 +2963,10 @@
 
   function renderChips(){
     const terms=sortedTerms(), trow=$id('termChips');
-    if(!state.curriculum[activeTerm]) activeTerm=(terms[0]||{id:'t2a'}).id;
-    trow.innerHTML=terms.map(t=>`<button type="button" class="chip ${t.id===activeTerm?'active':''}" data-term="${escAttr(t.id)}">${esc(t.name)}</button>`).join('');
+    if(!terms.find(t=>t.id===activeTerm)){ const ct=termOf(fmtDate(new Date())); activeTerm=(ct||terms[0]||{id:'t2a'}).id; }
+    if(!state.curriculum[activeTerm]) state.curriculum[activeTerm]={};
+    const nowTerm=termOf(fmtDate(new Date()));
+    trow.innerHTML=terms.map(t=>`<button type="button" class="chip ${t.id===activeTerm?'active':''}" data-term="${escAttr(t.id)}">${esc(t.name)}${(nowTerm&&nowTerm.id===t.id)?' <span class="now-dot">지금</span>':''}</button>`).join('');
     trow.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ activeTerm=c.dataset.term; renderChips(); });
 
     const names=classNames(), row=$id('currChips');
@@ -2953,13 +2979,17 @@
     const list=currOf(activeTerm,activeCurrClass);
     ta.value=list.join('\n');
     const tn=(terms.find(t=>t.id===activeTerm)||{}).name||'';
-    hint.textContent=`${tn} "${shortName(activeCurrClass)}" 총 ${list.filter(x=>x.trim()).length}차시. 한 줄 = 한 차시.`;
+    const r=termRange(activeTerm);
+    const ovN=r?Object.keys(state.overrides||{}).filter(k=>{ const [ds,cn]=k.split('|'); return cn===activeCurrClass&&ds>=r.from&&ds<r.to; }).length:0;
+    hint.textContent=`${tn} "${shortName(activeCurrClass)}" 총 ${list.filter(x=>x.trim()).length}차시. 한 줄 = 한 차시.`
+      + (ovN?`  ※ 이 반은 달력에서 직접 고친 칸이 ${ovN}개 있어서, 그 칸들은 이 목록보다 우선합니다. 목록대로 바꾸려면 아래 "직접 고친 수업 내용 되돌리기"를 누르세요.`:'');
   }
   $id('currTextarea').oninput=e=>{
     if(!activeCurrClass) return;
     if(!state.curriculum[activeTerm]) state.curriculum[activeTerm]={};
     state.curriculum[activeTerm][activeCurrClass]=e.target.value.split('\n');
     saveCurr();
+    clearTimeout(renderChips._t); renderChips._t=setTimeout(()=>render(),400);
   };
   $id('copyAllBtn').onclick=()=>{
     if(!activeCurrClass) return;
@@ -3290,6 +3320,7 @@
     btn.textContent='새 학년도 시작하기'; btn.disabled=false;
   }
   $id('nyBtn').onclick=startNewYear;
+  $id('reloadBtn').onclick=()=>{ flushMonthSave(); setTimeout(()=>location.reload(),600); };
 
   // ---------- 매달 백업 알림 ----------
   function checkMonthlyBackup(){
