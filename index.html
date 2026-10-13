@@ -693,6 +693,14 @@
   .ov-reset:hover{color:var(--holiday);}
   .class-block.skipped .cls-text-wrap{display:none;}
   @media print{ .ov-reset{display:none;} }
+  .first-btn{border:1px solid var(--ink-10);background:transparent;color:var(--ink-30);font-size:10px;font-weight:700;
+    border-radius:999px;padding:0 6px;line-height:16px;cursor:pointer;font-family:inherit;flex:none;opacity:.45;}
+  .first-btn:hover{opacity:1;border-color:#E2A23B;color:#C9862A;}
+  .first-btn.on{opacity:1;background:#E2A23B;border-color:#E2A23B;color:#fff;}
+  .first-btn.on.manual{box-shadow:0 0 0 2px #FBE3B8;}
+  .calendar-grid.week-view .first-btn{font-size:11.5px;line-height:19px;padding:0 8px;}
+  @media (max-width:760px){ .first-btn{font-size:11px;line-height:18px;padding:0 8px;opacity:.6;} }
+  @media print{ .first-btn:not(.on){display:none;} }
 </style>
 </head>
 <body>
@@ -1296,7 +1304,7 @@
     assess:JSON.parse(JSON.stringify(DEFAULT_ASSESS)),
     slots:JSON.parse(JSON.stringify(DEFAULT_SLOTS)),
     events:buildDefaultEvents(),
-    skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, endMarks:{}, doneMarks:{}, swapNotes:{}, nightDuty:{}, slotNotes:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
+    skips:Object.assign({},DEFAULT_SKIPS), overrides:{}, picks:{}, endMarks:{}, doneMarks:{}, swapNotes:{}, firstMarks:{}, nightDuty:{}, slotNotes:{}, swaps:JSON.parse(JSON.stringify(DEFAULT_SWAPS)),
     months:{}, weekly:{}, ideas:[], calEvents:[], viewMode:'month', weekStart:null
   };
   let activeCurrClass=null, activeTerm='t2', saveTimer=null, wkTimer=null, evMonth=null;
@@ -1342,14 +1350,42 @@
       quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark,sportSlot:state.sportSlot,nightRate:state.nightRate,nightHours:state.nightHours,theme:state.theme,lastMonthlyBackup:state.lastMonthlyBackup,prep:state.prep,lastCarry:state.lastCarry,viewMode:state.viewMode};
   }
   function eventsObj(){ return {events:state.events,assess:state.assess,dayTT:state.dayTT}; }
-  function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks,doneMarks:state.doneMarks,swapNotes:state.swapNotes,nightDuty:state.nightDuty,slotNotes:state.slotNotes,prepChecks:state.prepChecks,extraPay:state.extraPay}; }
+  function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks,doneMarks:state.doneMarks,swapNotes:state.swapNotes,nightDuty:state.nightDuty,slotNotes:state.slotNotes,prepChecks:state.prepChecks,extraPay:state.extraPay,firstMarks:state.firstMarks}; }
 
   const timers={};
+  const waiting={};   // 아직 안 보낸 저장 (창을 닫을 때 즉시 보냄)
   function saveIt(key,getter){
     markSaving();
     clearTimeout(timers[key]);
-    timers[key]=setTimeout(()=>queueWrite(key,getter),900);
+    waiting[key]=getter;
+    timers[key]=setTimeout(()=>{ delete waiting[key]; queueWrite(key,getter); },900);
   }
+  // 창을 닫거나 다른 앱으로 넘어갈 때, 기다리던 저장을 바로 내보냄
+  function writeNow(key,payload){
+    try{
+      if(STORE.mode==='server'){
+        fetch(API+encodeURIComponent(SPACE)+'/'+encodeURIComponent(key),
+          {method:'PUT',headers:{'Content-Type':'application/json'},body:payload,keepalive:true});
+      } else if(STORE.mode==='local'){
+        localStorage.setItem('mp:'+key,payload);
+      } else { STORE.set(key,payload,false); }
+    }catch(e){}
+  }
+  function flushNow(){
+    try{
+      Object.keys(waiting).forEach(k=>{ clearTimeout(timers[k]); writeNow(k,JSON.stringify(waiting[k]())); delete waiting[k]; });
+      Object.keys(pending).forEach(k=>{ writeNow(k,JSON.stringify(pending[k]())); delete pending[k]; });
+      Object.keys(dirtyMonths).forEach(mk=>{ writeNow(mk,JSON.stringify(state.months[mk]||{})); delete dirtyMonths[mk]; });
+      clearTimeout(saveTimer);
+      if(typeof ideaTimer!=='undefined' && ideaTimer){ clearTimeout(ideaTimer); writeNow('ideas',JSON.stringify(state.ideas||[])); }
+      if(typeof wkTimer!=='undefined' && wkTimer){ clearTimeout(wkTimer); writeNow('weekly',JSON.stringify(state.weekly||{})); }
+    }catch(e){}
+  }
+  try{
+    window.addEventListener('pagehide',flushNow);
+    window.addEventListener('beforeunload',flushNow);
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') flushNow(); });
+  }catch(e){}
   const saveBase=()=>saveIt('cfg:base',baseObj);
   const saveCurr=()=>saveIt('cfg:curriculum',()=>state.curriculum);
   const saveEvents=()=>saveIt('cfg:events',eventsObj);
@@ -1414,6 +1450,7 @@
       if(M.slotNotes) state.slotNotes=M.slotNotes;
       if(M.prepChecks) state.prepChecks=M.prepChecks;
       if(M.extraPay) state.extraPay=M.extraPay;
+      if(M.firstMarks) state.firstMarks=M.firstMarks;
     }
 
     // --- 이전 버전 데이터 보정 ---
@@ -1650,6 +1687,7 @@
                 const tc=(textCount[className]=textCount[className]||{});
                 tc[norm]=(tc[norm]||0)+1;            // 같은 내용이 여러 번 나오면(채점 ×2 등) 몇 번째인지 구분
                 const fk=(curTerm?curTerm.id:'')+'|'+norm+'#'+tc[norm];
+                result[ds][period].fk=fk;
                 if(!firstSeen[fk]){ firstSeen[fk]=true; result[ds][period].first=true; }
               }
             }
@@ -1659,6 +1697,20 @@
       d.setDate(d.getDate()+1);
     }
     if(ovDirty) setTimeout(saveMarks,0);
+    const fm=state.firstMarks||{};
+    const forced=new Set();
+    Object.keys(result).forEach(ds=>Object.keys(result[ds]).forEach(p=>{
+      const r=result[ds][p]; if(r.emptied||r.reason) return;
+      r.autoFirst=!!r.first;
+      if(fm[`${ds}|${r.className}|${p}`]===true && r.fk) forced.add(r.fk);
+    }));
+    Object.keys(result).forEach(ds=>Object.keys(result[ds]).forEach(p=>{
+      const r=result[ds][p]; if(r.emptied||r.reason) return;
+      const k=`${ds}|${r.className}|${p}`;
+      if(k in fm) r.first=fm[k];
+      else if(r.first && r.fk && forced.has(r.fk)) r.first=false;
+      r.firstManual=(k in fm);
+    }));
     return result;
   }
 
@@ -1904,7 +1956,9 @@
           <input type="checkbox" class="done-chk" title="수업 완료" data-role="lesson-done" data-key="${escAttr(key)}" ${isDone?'checked':''}>
           ${periodCtl}
           ${classSelectHTML(dk,p,a.className,a.swapped)}
-          ${(a.first&&!a.reason)?'<span class="first-tag" title="이 차시를 처음 하는 반이에요 — 수업 준비!">✦첫</span>':''}
+          ${a.reason?'':`<button class="first-btn ${a.first?'on':''} ${a.firstManual?'manual':''}" data-role="first-toggle"
+              data-key="${escAttr(key)}" data-auto="${a.autoFirst?1:0}"
+              title="${a.first?'처음 하는 반 (눌러서 끄기)':'처음 하는 반으로 지정하기'}${a.firstManual?' · 직접 지정함':''}">${a.first?'✦첫':'첫'}</button>`}
           ${a.reason?'':`<button class="end-toggle ${a.last?'on':''}" title="이 반의 진도 마지막 차시로 표시" data-role="end-mark" data-key="${escAttr(key)}">끝</button>`}
           ${reasonSelectHTML(key,a.reason,dayReason)}
           ${a.isExtra?`<button class="del" data-role="extra-class-del" data-key="${dk}|${p}">×</button>`:''}
@@ -2270,6 +2324,14 @@
       t.st=ST_ORDER[(ST_ORDER.indexOf(cur)+1)%ST_ORDER.length];
       delete t.done;
       saveWeekly(); render();
+    }
+    else if(role==='first-toggle'){
+      const k=el.dataset.key, isOn=el.classList.contains('on'), auto=el.dataset.auto==='1';
+      const next=!isOn, manual=el.classList.contains('manual');
+      if(!state.firstMarks) state.firstMarks={};
+      if(manual && next===auto) delete state.firstMarks[k];   // 내가 바꿨던 걸 되돌리면 다시 자동으로
+      else state.firstMarks[k]=next;
+      saveMarks(); render();
     }
     else if(role==='ov-reset'){
       delete state.overrides[el.dataset.key];
