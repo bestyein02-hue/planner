@@ -701,6 +701,9 @@
   .calendar-grid.week-view .first-btn{font-size:11.5px;line-height:19px;padding:0 8px;}
   @media (max-width:760px){ .first-btn{font-size:11px;line-height:18px;padding:0 8px;opacity:.6;} }
   @media print{ .first-btn:not(.on){display:none;} }
+  .ttv-bar .chip-row{flex-wrap:wrap;}
+  .ttv-edit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;margin:0 0 10px;}
+  .ttv-edit input[type=date]{font-family:inherit;font-size:13px;padding:5px 7px;border:1px solid var(--ink-30);border-radius:6px;}
 </style>
 </head>
 <body>
@@ -833,6 +836,7 @@
         <div class="stepper"><button id="periodsMinus">−</button><span id="periodsVal">7</span><button id="periodsPlus">+</button></div>
         <span style="color:var(--ink-30)">칸에 반 이름을 적으면 매주 그 요일·교시에 자동 반영됩니다.</span>
       </div>
+      <div class="ttv-bar" id="ttvBar"></div>
       <div class="panel-scroll"><table class="tt-table" id="ttTable"></table></div>
     </div>
 
@@ -910,6 +914,15 @@
             <option value="2">2주씩 (3장)</option>
           </select>
           <button class="btn" id="printBtn">인쇄용 파일 만들기</button>
+        </div>
+        <div id="spaceBox" style="display:none">
+          <div class="tool-title" style="margin-top:12px">비밀단어 바꾸기</div>
+          <div class="tool-row">
+            <input type="text" id="spaceInput" placeholder="새 비밀단어 (영문·숫자)" autocomplete="off"
+              style="border:1px solid var(--ink-30);border-radius:6px;padding:6px 9px;font-size:13px;width:200px">
+            <button class="btn" id="spaceBtn">바꾸기</button>
+          </div>
+          <div class="curr-hint" id="spaceHint" style="margin-top:5px">모든 기록을 새 주소로 옮기고, 옛 주소의 기록은 지웁니다.</div>
         </div>
         <div class="tool-title" style="margin-top:12px">화면 새로 불러오기</div>
         <div class="tool-row"><button class="btn" id="reloadBtn">↻ 새로고침</button>
@@ -1036,20 +1049,78 @@
     }catch(e){}
   })();
 
+  // 기기 임시 보관함 (서버 저장일 때만)
+  const OFFK=k=>'mpq:'+(SPACE||'')+':'+k, CACHEK=k=>'mpc:'+(SPACE||'')+':'+k;
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  const offGet=k=>lsGet(OFFK(k)), offPut=(k,v)=>lsSet(OFFK(k),v), offDel=k=>lsDel(OFFK(k));
+  const cacheGet=k=>lsGet(CACHEK(k)), cacheSet=(k,v)=>lsSet(CACHEK(k),v);
+  function offKeys(){
+    const out=[]; try{ const pre='mpq:'+(SPACE||'')+':';
+      for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf(pre)===0) out.push(k.slice(pre.length)); } }catch(e){}
+    return out;
+  }
+  let isOffline=false;
+  function setOffline(v){
+    isOffline=v;
+    try{
+      const f=document.getElementById('saveFlag');
+      if(f && v) f.textContent='📴 연결 끊김 · 기기에 보관 중';
+    }catch(e){}
+  }
+  async function flushOffline(){
+    if(!SPACE) return;
+    const keys=offKeys(); if(!keys.length){ if(isOffline){ isOffline=false; } return; }
+    let left=0;
+    for(const k of keys){
+      const v=offGet(k); if(v==null) continue;
+      try{
+        const r=await fetch(API+encodeURIComponent(SPACE)+'/'+encodeURIComponent(k),
+          {method:'PUT',headers:{'Content-Type':'application/json'},body:v});
+        if(r.ok) offDel(k); else left++;
+      }catch(e){ left++; }
+    }
+    const f=document.getElementById('saveFlag');
+    if(!left){ isOffline=false; if(f&&keys.length){ f.textContent='☁ 다시 연결 · 저장 완료'; setTimeout(()=>{ if(f.textContent.indexOf('다시 연결')>=0) f.textContent=''; },2500); } }
+    else setOffline(true);
+  }
+  try{
+    window.addEventListener('online',()=>flushOffline());
+    setInterval(()=>{ if(offKeys().length) flushOffline(); },30000);
+  }catch(e){}
+
   const STORE=(function(){
     if(SPACE){
       return {
         mode:'server',
         async get(k){
-          const r=await fetch(API+encodeURIComponent(SPACE)+'/'+encodeURIComponent(k),{cache:'no-store'});
+          let r;
+          try{ r=await fetch(API+encodeURIComponent(SPACE)+'/'+encodeURIComponent(k),{cache:'no-store'}); }
+          catch(e){
+            // 인터넷이 끊김 → 마지막으로 받아둔 내용으로 보여줌
+            const q=offGet(k); if(q!=null){ setOffline(true); return {key:k,value:q}; }
+            const c=cacheGet(k); if(c!=null){ setOffline(true); return {key:k,value:c}; }
+            setOffline(true); throw e;
+          }
           if(!r.ok) throw new Error('not found');
-          return {key:k,value:await r.text()};
+          const v=await r.text();
+          const q=offGet(k);
+          if(q!=null) return {key:k,value:q};   // 아직 못 보낸 최신 내용이 기기에 있으면 그게 우선
+          cacheSet(k,v);
+          return {key:k,value:v};
         },
         async set(k,v){
-          const r=await fetch(API+encodeURIComponent(SPACE)+'/'+encodeURIComponent(k),
-            {method:'PUT',headers:{'Content-Type':'application/json'},body:v});
-          if(!r.ok) throw new Error('save failed');
-          return {key:k,value:v};
+          cacheSet(k,v);
+          try{
+            const r=await fetch(API+encodeURIComponent(SPACE)+'/'+encodeURIComponent(k),
+              {method:'PUT',headers:{'Content-Type':'application/json'},body:v});
+            if(!r.ok) throw new Error('save failed');
+            offDel(k); return {key:k,value:v};
+          }catch(e){
+            offPut(k,v); setOffline(true);
+            return {key:k,value:v,queued:true};   // 기기에 보관 — 연결되면 다시 보냄
+          }
         },
         async delete(k){
           await fetch(API+encodeURIComponent(SPACE)+'/'+encodeURIComponent(k),{method:'DELETE'});
@@ -1295,7 +1366,7 @@
     year:today.getFullYear(), month:today.getMonth(),
     subtitle:'', periodsCount:7,
     timetable:JSON.parse(JSON.stringify(DEFAULT_TIMETABLE)),
-    nightRate:14213, nightHours:4, theme:'season',
+    nightRate:14213, nightHours:4, theme:'season', ttVersions:[],
     prep:JSON.parse(JSON.stringify(DEFAULT_PREP)), prepChecks:{}, prepOpen:{}, extraPay:{},
     terms:JSON.parse(JSON.stringify(DEFAULT_TERMS)), quarterSplit:true, gymAuto:true, progMark:true, sportSlot:true,
     curriculum:JSON.parse(JSON.stringify(DEFAULT_CURRICULUM)),
@@ -1310,13 +1381,23 @@
   let activeCurrClass=null, activeTerm='t2', saveTimer=null, wkTimer=null, evMonth=null;
   const saveFlag=$id('saveFlag');
 
-  function ensureTimetableShape(){
+  function shapeTT(tt){
     ['mon','tue','wed','thu','fri'].forEach(k=>{
-      const arr=state.timetable[k]||[];
+      const arr=tt[k]||[];
       while(arr.length<state.periodsCount) arr.push('');
       arr.length=state.periodsCount;
-      state.timetable[k]=arr;
+      tt[k]=arr;
     });
+  }
+  function ensureTimetableShape(){
+    shapeTT(state.timetable);
+    (state.ttVersions||[]).forEach(v=>{ if(!v.timetable) v.timetable={}; shapeTT(v.timetable); });
+  }
+  // 그 날짜에 적용되는 시간표 (적용일이 가장 늦은 것)
+  function ttFor(ds){
+    let tt=state.timetable, best='';
+    (state.ttVersions||[]).forEach(v=>{ if(v.from && v.from<=ds && v.from>=best){ best=v.from; tt=v.timetable; } });
+    return tt;
   }
   async function getJSON(key,fb){
     try{ const r=await STORE.get(key,false); if(r&&r.value) return JSON.parse(r.value); }catch(e){}
@@ -1335,8 +1416,8 @@
       for(let a=0;a<3&&!ok;a++){
         try{ await STORE.set(key,payload,false); ok=true; }catch(e){ await sleep(400*(a+1)); }
       }
-      if(!ok) saveFlag.textContent='저장 실패';
-      else if(!Object.keys(pending).length) flagSaved();
+      if(!ok) saveFlag.textContent=isOffline?'📴 연결 끊김 · 기기에 보관 중':'저장 실패';
+      else if(!Object.keys(pending).length){ if(isOffline) setOffline(true); else flagSaved(); }
       await sleep(120);
     }
     queueRunning=false;
@@ -1347,7 +1428,7 @@
   function baseObj(){
     return {subtitle:state.subtitle,periodsCount:state.periodsCount,
       timetable:state.timetable,terms:state.terms,slots:state.slots,
-      quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark,sportSlot:state.sportSlot,nightRate:state.nightRate,nightHours:state.nightHours,theme:state.theme,lastMonthlyBackup:state.lastMonthlyBackup,prep:state.prep,lastCarry:state.lastCarry,viewMode:state.viewMode};
+      quarterSplit:state.quarterSplit,gymAuto:state.gymAuto,progMark:state.progMark,sportSlot:state.sportSlot,nightRate:state.nightRate,nightHours:state.nightHours,theme:state.theme,lastMonthlyBackup:state.lastMonthlyBackup,ttVersions:state.ttVersions,prep:state.prep,lastCarry:state.lastCarry,viewMode:state.viewMode};
   }
   function eventsObj(){ return {events:state.events,assess:state.assess,dayTT:state.dayTT}; }
   function marksObj(){ return {skips:state.skips,overrides:state.overrides,picks:state.picks,swaps:state.swaps,dateSlots:state.dateSlots,endMarks:state.endMarks,doneMarks:state.doneMarks,swapNotes:state.swapNotes,nightDuty:state.nightDuty,slotNotes:state.slotNotes,prepChecks:state.prepChecks,extraPay:state.extraPay,firstMarks:state.firstMarks}; }
@@ -1364,6 +1445,7 @@
   function writeNow(key,payload){
     try{
       if(STORE.mode==='server'){
+        cacheSet(key,payload); offPut(key,payload);   // 보낸 게 확인되면 다음에 열 때 지움
         fetch(API+encodeURIComponent(SPACE)+'/'+encodeURIComponent(key),
           {method:'PUT',headers:{'Content-Type':'application/json'},body:payload,keepalive:true});
       } else if(STORE.mode==='local'){
@@ -1420,6 +1502,7 @@
       if(B.nightHours) state.nightHours=B.nightHours;
       if(B.theme) state.theme=B.theme;
       if(B.lastMonthlyBackup) state.lastMonthlyBackup=B.lastMonthlyBackup;
+      if(B.ttVersions) state.ttVersions=B.ttVersions;
       if(B.prep) state.prep=B.prep;
       if(B.lastCarry) state.lastCarry=B.lastCarry;
       if(B.viewMode) state.viewMode=B.viewMode;
@@ -1578,7 +1661,7 @@
   }
   // 체육관 모임일: 1교시 수업이 7교시로 이동
   function baseClassAt(wdName,period,ds){
-    const arr=state.timetable[wdName]||[];
+    const arr=(ttFor(ds)[wdName])||[];
     let base=(arr[period-1]||'').trim();
     if(isGymDay(ds)){
       if(period===1) return '';
@@ -1716,7 +1799,8 @@
 
   function classNames(){
     const s=new Set();
-    ['mon','tue','wed','thu','fri'].forEach(d=>(state.timetable[d]||[]).forEach(v=>{ if(v&&v.trim()) s.add(v.trim()); }));
+    [state.timetable].concat((state.ttVersions||[]).map(v=>v.timetable||{})).forEach(tt=>
+      ['mon','tue','wed','thu','fri'].forEach(d=>(tt[d]||[]).forEach(v=>{ if(v&&v.trim()) s.add(v.trim()); })));
     Object.values(state.swaps).forEach(v=>{ if(v&&v!=='__empty__') s.add(v); });
     return Array.from(s).sort();
   }
@@ -2985,21 +3069,64 @@
   $id('periodsMinus').onclick=()=>{ if(state.periodsCount>1){state.periodsCount--; ensureTimetableShape(); saveBase(); renderTT();} };
   $id('periodsPlus').onclick=()=>{ if(state.periodsCount<10){state.periodsCount++; ensureTimetableShape(); saveBase(); renderTT();} };
 
+  let ttEdit='base';
+  function curTT(){
+    if(ttEdit==='base'||!state.ttVersions||!state.ttVersions[ttEdit]) { ttEdit='base'; return state.timetable; }
+    return state.ttVersions[ttEdit].timetable;
+  }
+  function renderTTV(){
+    const bar=$id('ttvBar');
+    const vs=state.ttVersions||[];
+    const today=fmtDate(new Date());
+    const nowIdx=(()=>{ let bi='base',bd=''; vs.forEach((v,i)=>{ if(v.from<=today&&v.from>=bd){bd=v.from;bi=i;} }); return bi; })();
+    const chip=(id,label)=>`<button type="button" class="chip ${String(ttEdit)===String(id)?'active':''}" data-ttv="${id}">${label}${String(nowIdx)===String(id)?' <span class="now-dot">지금</span>':''}</button>`;
+    let html='<div class="chip-row" style="margin-bottom:6px">'+chip('base','처음 시간표');
+    vs.map((v,i)=>({v,i})).sort((a,b)=>a.v.from<b.v.from?-1:1).forEach(({v,i})=>{
+      html+=chip(i,`${v.from.slice(5).replace('-','/')}부터`);
+    });
+    html+='<button type="button" class="copy-btn" id="ttvAdd">+ 바뀐 시간표 추가</button></div>';
+    if(ttEdit!=='base'){
+      const v=vs[ttEdit];
+      html+=`<div class="ttv-edit">적용 시작일 <input type="date" id="ttvFrom" value="${escAttr(v.from)}">
+        <button type="button" class="copy-btn" id="ttvDel">이 시간표 지우기</button>
+        <span class="curr-hint" style="margin:0">이 날짜부터 이 시간표로 계산합니다. 그 전 날짜는 앞 시간표 그대로예요.</span></div>`;
+    } else {
+      html+=`<div class="curr-hint" style="margin:0 0 8px">학기 중에 시간표가 바뀌면 "+ 바뀐 시간표 추가"로 적용일을 정해 새로 넣으세요. 지난 기록은 그대로 남습니다.</div>`;
+    }
+    bar.innerHTML=html;
+    bar.querySelectorAll('[data-ttv]').forEach(b=>b.onclick=()=>{ ttEdit=b.dataset.ttv==='base'?'base':+b.dataset.ttv; renderTT(); });
+    const add=document.getElementById('ttvAdd');
+    if(add) add.onclick=()=>{
+      if(!state.ttVersions) state.ttVersions=[];
+      const src=ttFor(today);
+      state.ttVersions.push({from:today,timetable:JSON.parse(JSON.stringify(src))});
+      ttEdit=state.ttVersions.length-1;
+      saveBase(); renderTT(); render();
+    };
+    const fr=document.getElementById('ttvFrom');
+    if(fr) fr.onchange=()=>{ if(fr.value){ state.ttVersions[ttEdit].from=fr.value; saveBase(); renderTT(); render(); } };
+    const del=document.getElementById('ttvDel');
+    if(del) del.onclick=()=>{
+      if(!confirm('이 시간표를 지울까요? 그 기간은 앞 시간표로 다시 계산됩니다.')) return;
+      state.ttVersions.splice(ttEdit,1); ttEdit='base'; saveBase(); renderTT(); render();
+    };
+  }
   function renderTT(){
+    renderTTV();
     $id('periodsVal').textContent=state.periodsCount;
     const days=['mon','tue','wed','thu','fri'];
     let html='<tr><th></th>'+days.map(d=>`<th>${WD_LABELS[d]}</th>`).join('')+'</tr>';
     for(let p=0;p<state.periodsCount;p++){
       html+=`<tr><td class="period-num">${p+1}교시</td>`;
       days.forEach(d=>{
-        const v=(state.timetable[d]||[])[p]||'';
+        const v=(curTT()[d]||[])[p]||'';
         html+=`<td><input type="text" data-role="tt-cell" data-day="${d}" data-period="${p}" value="${escAttr(v)}"></td>`;
       });
       html+='</tr>';
     }
     $id('ttTable').innerHTML=html;
     document.querySelectorAll('[data-role="tt-cell"]').forEach(inp=>{
-      inp.oninput=()=>{ state.timetable[inp.dataset.day][+inp.dataset.period]=inp.value; saveBase(); };
+      inp.oninput=()=>{ const tt=curTT(); if(!tt[inp.dataset.day]) tt[inp.dataset.day]=[]; tt[inp.dataset.day][+inp.dataset.period]=inp.value; saveBase(); clearTimeout(renderTT._t); renderTT._t=setTimeout(render,500); };
       inp.onchange=renderChips;
     });
   }
@@ -3363,6 +3490,7 @@
       const newStart=sortedTerms()[0].start;
       if($id('nyTT').checked){
         ['mon','tue','wed','thu','fri'].forEach(k=>{ state.timetable[k]=(state.timetable[k]||[]).map(()=>''); });
+        state.ttVersions=[];
       }
       if($id('nyCurr').checked){
         Object.keys(state.curriculum||{}).forEach(tid=>{
@@ -3382,6 +3510,56 @@
     btn.textContent='새 학년도 시작하기'; btn.disabled=false;
   }
   $id('nyBtn').onclick=startNewYear;
+
+  // ---------- 비밀단어 바꾸기 ----------
+  async function changeSpace(){
+    if(STORE.mode!=='server'||!SPACE) return;
+    const nw=($id('spaceInput').value||'').trim();
+    const hint=$id('spaceHint'), btn=$id('spaceBtn');
+    if(!/^[A-Za-z0-9_-]{3,64}$/.test(nw)){ hint.textContent='영문·숫자·-·_ 로 3자 이상 적어주세요.'; return; }
+    if(nw===SPACE){ hint.textContent='지금과 같은 비밀단어예요.'; return; }
+    if(!confirm(`비밀단어를 "${nw}"로 바꿉니다.\n모든 기록을 새 주소로 옮긴 뒤 옛 주소의 기록은 지워요.\n계속할까요?`)) return;
+    btn.disabled=true;
+    const url=(sp,k)=>API+encodeURIComponent(sp)+'/'+encodeURIComponent(k);
+    try{
+      flushNow(); await sleep(400); await flushOffline();
+      // 새 주소가 비어 있는지 확인 (남의 기록을 덮어쓰지 않도록)
+      const chk=await fetch(url(nw,'cfg:base'),{cache:'no-store'});
+      if(chk.ok){ hint.textContent='그 비밀단어는 이미 쓰이고 있어요. 다른 걸로 정해주세요.'; btn.disabled=false; return; }
+
+      const keys=['cfg:base','cfg:curriculum','cfg:events','cfg:marks','weekly','ideas','calEvents','snaps','archives','config'];
+      for(let y=2025;y<=2028;y++) for(let m=0;m<12;m++) keys.push(monthKey(y,m));
+      const snaps=await getJSON('snaps',[]); snaps.forEach(d=>keys.push('snap:'+d));
+      const arch=await getJSON('archives',[]); arch.forEach(y=>keys.push('archive:'+y));
+
+      const moved=[];
+      for(let i=0;i<keys.length;i++){
+        const k=keys[i];
+        hint.textContent=`옮기는 중… ${i+1}/${keys.length}`;
+        const r=await fetch(url(SPACE,k),{cache:'no-store'});
+        if(!r.ok) continue;
+        const v=await r.text();
+        const w=await fetch(url(nw,k),{method:'PUT',headers:{'Content-Type':'application/json'},body:v});
+        if(!w.ok) throw new Error('옮기기 실패: '+k);
+        moved.push(k);
+      }
+      // 제대로 옮겨졌는지 확인한 뒤에만 옛 기록 삭제
+      const ok=await fetch(url(nw,'cfg:base'),{cache:'no-store'});
+      if(!ok.ok) throw new Error('확인 실패');
+      hint.textContent='옛 주소 정리 중…';
+      for(const k of moved){ try{ await fetch(url(SPACE,k),{method:'DELETE'}); }catch(e){} }
+      // 이 기기의 옛 임시 보관 정리
+      try{ const pre=['mpc:'+SPACE+':','mpq:'+SPACE+':'];
+        Object.keys(localStorage).forEach(k=>{ if(pre.some(p=>k.indexOf(p)===0)) localStorage.removeItem(k); }); }catch(e){}
+      alert(`다 옮겼어요. 새 주소로 이동합니다.\n\n${location.origin}/p/${nw}\n\n휴대폰 홈 화면과 설치한 앱은 새 주소로 다시 추가해주세요.`);
+      location.href=location.origin+'/p/'+encodeURIComponent(nw);
+    }catch(e){
+      hint.textContent='옮기다가 문제가 생겼어요. 옛 기록은 지우지 않았으니 안심하세요. ('+(e.message||'')+')';
+      btn.disabled=false;
+    }
+  }
+  $id('spaceBtn').onclick=changeSpace;
+  if(STORE.mode==='server') $id('spaceBox').style.display='block';
   $id('reloadBtn').onclick=()=>{ flushMonthSave(); setTimeout(()=>location.reload(),600); };
 
   // ---------- 매달 백업 알림 ----------
@@ -3520,6 +3698,7 @@
       else if(STORE.mode==='claude'){ sb.textContent='Claude 저장'; }
       else { sb.textContent='이 브라우저에만 저장'; }
     }
+    await flushOffline();
     await loadAll();
     // 열 때는 언제나 오늘이 속한 달·주로
     const t0=new Date();
