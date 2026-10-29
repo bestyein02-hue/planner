@@ -770,6 +770,10 @@
   @media (max-width:760px){ .task-line{font-size:15.5px;padding:5px 8px;} .task-item.wk-item .task-line{font-size:16px;} }
   @media print{ .task-line:hover{background:none;} }
   body.syncing .wrap{pointer-events:none;}
+  .edit-btn{border:none;background:none;color:var(--ink-30);cursor:pointer;font-size:12px;padding:0 2px;flex:none;opacity:.5;}
+  .edit-btn:hover{opacity:1;color:var(--class-accent);}
+  @media (max-width:760px){ .edit-btn{font-size:19px;opacity:1;color:var(--class-accent);padding:4px 9px;margin:-4px 0;} .task-item .defer-btn,.task-item .hl-btn,.task-item .del{padding:4px 7px;} }
+  @media print{ .edit-btn{display:none;} }
 </style>
 </head>
 <body>
@@ -1011,7 +1015,7 @@
       <h3 style="font-size:14px;margin:0 0 8px">사용법</h3>
       <div class="curr-hint" style="margin:0 0 16px;font-size:12.5px;color:var(--ink-60);line-height:1.8">
         반 이름을 클릭하면 그날만 다른 반으로 바꾸거나 "빈 시간"으로 비울 수 있습니다. 비운 자리는 빗금과 함께 "빈 시간"으로 남고, 그 아래 메모칸에 누구와 언제 교체했는지 적어둘 수 있습니다. "+ 보강 추가"를 누르면 빈 교시에 수업이 한 칸 생기고, 교시·반을 골라 넣으면 진도 차시에 그대로 반영됩니다.<br>
-    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 수업 왼쪽 체크박스로 진행한 수업을 표시하면 취소선이 그어지고 아래로 내려갑니다. 업무·주간 목표도 완료하면 아래로 내려가요. ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 업무·주간 목표 항목은 끌어서 다른 날짜로 옮길 수 있습니다 (일요일 칸에 놓으면 그 주의 주간 목표가 됩니다). 오른쪽 위 "월 / 주" 버튼으로 한 달 전체 보기와 한 주만 크게 보기를 오갈 수 있습니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
+    학사일정은 설정의 "학사일정" 탭에서 언제든 고칠 수 있고, 결손 사유를 지정한 날은 그날 수업이 자동으로 밀립니다. 수업 왼쪽 체크박스로 진행한 수업을 표시하면 취소선이 그어지고 아래로 내려갑니다. 업무·주간 목표도 완료하면 아래로 내려가요. 업무·주간 목표 글자를 한 번 누르면 상태가 대기→진행 중→완료로 바뀌고, 글을 고치려면 오른쪽 ✎ 버튼을 누르세요. ✦ 버튼을 누르면 형광펜 색이 노랑→분홍→파랑→초록→없음 순으로 바뀝니다. 업무·주간 목표 항목은 끌어서 다른 날짜로 옮길 수 있습니다 (일요일 칸에 놓으면 그 주의 주간 목표가 됩니다). 오른쪽 위 "월 / 주" 버튼으로 한 달 전체 보기와 한 주만 크게 보기를 오갈 수 있습니다. 지난 날짜는 연하게 표시되고, 칸에 마우스를 올리면 또렷해집니다. 일요일 칸은 주간 목표, 오른쪽 드롭다운은 결손 사유입니다. 수업 칸의 "끝" 버튼을 누르면 그 반의 진도 마지막 차시로 표시되고(주황색), 그 뒤 수업은 회색 자습으로 바뀝니다.
       </div>
       <h3 style="font-size:14px;margin:0 0 8px">자동 백업</h3>
       <div class="curr-hint" style="margin:0 0 8px;font-size:12.5px;color:var(--ink-60)">
@@ -2099,7 +2103,8 @@
         ${t.carried?`<span class="carry-tag" title="${t.carried}주 밀림">${t.carried>1?t.carried+'주':'지난주'}</span>`:''}
         ${(editKey===`w|${wk}|${i}`||!(t.text||'').trim())
           ? `<textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="wk-text" data-wk="${wk}" data-idx="${i}" data-editkey="w|${wk}|${i}" placeholder="이번 주 할 일">${esc(t.text)}</textarea>`
-          : `<div class="task-line st-${statusOf(t)||'wait'}" style="${hlStyle(t.hl)}" data-role="wk-cycle" data-wk="${wk}" data-idx="${i}" data-editkey="w|${wk}|${i}" title="누르면 상태 바뀜 · 두 번 누르면(휴대폰은 길게) 고치기">${esc(t.text)}</div>`}
+          : `<div class="task-line st-${statusOf(t)||'wait'}" style="${hlStyle(t.hl)}" data-role="wk-cycle" data-wk="${wk}" data-idx="${i}" data-editkey="w|${wk}|${i}" title="누르면 상태 바뀜 · 글 고치기는 오른쪽 ✎">${esc(t.text)}</div>`}
+        <button class="edit-btn" title="글 고치기" data-role="wk-edit" data-wk="${wk}" data-idx="${i}">✎</button>
         <button class="hl-btn" title="형광펜" style="color:${HL_COLORS[t.hl]||''}" data-role="wk-hl" data-wk="${wk}" data-idx="${i}">✦</button>
         <button class="del" data-role="wk-del" data-wk="${wk}" data-idx="${i}">×</button>
       </div>`).join('');
@@ -2183,8 +2188,9 @@
       <div class="task-item st-row-${statusOf(t)||'none'} ${statusOf(t)==='done'?'done':''} hl-${t.hl||'none'}" draggable="true" data-drag="t|${dayKey}|${i}">
         ${(editKey===`t|${dayKey}|${i}`||!(t.text||'').trim())
           ? `<textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="task-text" data-date="${dayKey}" data-idx="${i}" data-editkey="t|${dayKey}|${i}" placeholder="업무">${esc(t.text)}</textarea>`
-          : `<div class="task-line st-${statusOf(t)||'wait'}" style="${hlStyle(t.hl)}" data-role="task-cycle" data-date="${dayKey}" data-idx="${i}" data-editkey="t|${dayKey}|${i}" title="누르면 상태 바뀜 · 두 번 누르면(휴대폰은 길게) 고치기">${esc(t.text)}</div>`}
+          : `<div class="task-line st-${statusOf(t)||'wait'}" style="${hlStyle(t.hl)}" data-role="task-cycle" data-date="${dayKey}" data-idx="${i}" data-editkey="t|${dayKey}|${i}" title="누르면 상태 바뀜 · 글 고치기는 오른쪽 ✎">${esc(t.text)}</div>`}
         ${t.moved?'<span class="moved-tag" title="연기된 일">↷</span>':''}
+        <button class="edit-btn" title="글 고치기" data-role="task-edit" data-date="${dayKey}" data-idx="${i}">✎</button>
         <button class="defer-btn" title="다음 근무일로 넘기기" data-role="task-defer" data-date="${dayKey}" data-idx="${i}">→</button>
         <button class="hl-btn" title="형광펜" style="color:${HL_COLORS[t.hl]||''}" data-role="task-hl" data-date="${dayKey}" data-idx="${i}">✦</button>
         <button class="del" data-role="task-del" data-date="${dayKey}" data-idx="${i}">×</button>
@@ -2682,6 +2688,8 @@
       saveMarks(); render();
     }
     else if(role==='extra-class-del'){ delete state.swaps[el.dataset.key]; saveMarks(); render(); }
+    else if(role==='task-edit'){ startEdit(`t|${el.dataset.date}|${el.dataset.idx}`); }
+    else if(role==='wk-edit'){ startEdit(`w|${el.dataset.wk}|${el.dataset.idx}`); }
     else if(role==='task-cycle'){
       if(longPressed){ longPressed=false; return; }
       const d=el.dataset.date, ix=+el.dataset.idx, t=ensureDayD(d).tasks[ix]; if(!t) return;
