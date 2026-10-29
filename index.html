@@ -1478,6 +1478,14 @@
   let bootCacheOnly=false;     // 열 때 서버를 기다리지 않고 기기에 저장된 지난번 내용을 먼저 쓰는 중
   let userTouched=false;       // 열린 뒤 사용자가 무언가 눌렀거나 쓴 적이 있는지
   let lastLoadSig='';
+  function isTyping(){
+    try{
+      if(editKey) return true;
+      if(document.querySelector('.modal-overlay.open')) return true;   // 설정·일정 창이 열려 있으면 건너뜀
+      const a=document.activeElement;
+      return !!(a && /^(TEXTAREA|INPUT)$/.test(a.tagName) && a.type!=='checkbox' && a.id!=='searchInput' ? true : false);
+    }catch(e){ return false; }
+  }
   async function getJSON(key,fb){
     if(bootCacheOnly && STORE.mode==='server'){
       const c=cacheGet(key);
@@ -1511,8 +1519,13 @@
     }
     queueRunning=false;
   }
-  function flagSaved(){ saveFlag.textContent='저장됨'; setTimeout(()=>{ if(saveFlag.textContent==='저장됨') saveFlag.textContent=''; },1000); }
-  function markSaving(){ saveFlag.textContent='저장 중…'; }
+  function flagSaved(){ unsavedFlag=false; saveFlag.textContent='저장됨'; setTimeout(()=>{ if(saveFlag.textContent==='저장됨') saveFlag.textContent=''; },1000); }
+  let unsavedFlag=false;
+  function markSaving(){ unsavedFlag=true; saveFlag.textContent='저장 중…'; }
+  function hasUnsaved(){
+    return unsavedFlag || queueRunning || Object.keys(pending).length>0 || Object.keys(waiting).length>0
+      || Object.keys(dirtyMonths).length>0 || (typeof offKeys==='function' && offKeys().length>0);
+  }
 
   function baseObj(){
     return {subtitle:state.subtitle,periodsCount:state.periodsCount,
@@ -1570,21 +1583,24 @@
   async function loadAll(opts){
     // 서버에서 한꺼번에 받기 (하나씩 기다리면 인터넷이 느릴수록 열리는 데 오래 걸림)
     const tn0=new Date(), pm0=new Date(tn0.getFullYear(),tn0.getMonth()-1,1);
-    const [base,curr,evs,mks,wkRaw,ideaRaw,calRaw,m0,m1]=await Promise.all([
+    const vk=monthKey(state.year,state.month);
+    const [base,curr,evs,mks,wkRaw,ideaRaw,calRaw,m0,m1,mv]=await Promise.all([
       getJSON('cfg:base',null), getJSON('cfg:curriculum',null), getJSON('cfg:events',null), getJSON('cfg:marks',null),
       getJSON('weekly',{}), getJSON('ideas',[]), getJSON('calEvents',[]),
-      getJSON(monthKey(tn0.getFullYear(),tn0.getMonth()),null), getJSON(monthKey(pm0.getFullYear(),pm0.getMonth()),null)
+      getJSON(monthKey(tn0.getFullYear(),tn0.getMonth()),null), getJSON(monthKey(pm0.getFullYear(),pm0.getMonth()),null),
+      (opts&&opts.refresh&&vk!==monthKey(tn0.getFullYear(),tn0.getMonth())&&vk!==monthKey(pm0.getFullYear(),pm0.getMonth()))?getJSON(vk,null):null
     ]);
-    const sig=JSON.stringify([base,curr,evs,mks,wkRaw,ideaRaw,calRaw,m0,m1]);
+    const sig=JSON.stringify([base,curr,evs,mks,wkRaw,ideaRaw,calRaw,m0,m1,mv]);
     if(opts&&opts.refresh){
       if(sig===lastLoadSig) return false;     // 달라진 게 없음
-      if(userTouched) return false;           // 이미 고치는 중이라 덮어쓰지 않음
+      if(hasUnsaved()||isTyping()) return false;   // 고치는 중이거나 아직 저장 전이면 덮어쓰지 않음
     }
     lastLoadSig=sig;
     Object.keys(loadedMonths).forEach(k=>delete loadedMonths[k]); state.months={};
     const emptyKnown=k=>bootCacheOnly && STORE.mode==='server' && cacheGet(k)==='null';
     { const k0=monthKey(tn0.getFullYear(),tn0.getMonth()); if(m0||emptyKnown(k0)){ state.months[k0]=m0||{}; loadedMonths[k0]=true; } }
     { const k1=monthKey(pm0.getFullYear(),pm0.getMonth()); if(m1||emptyKnown(k1)){ state.months[k1]=m1||{}; loadedMonths[k1]=true; } }
+    if(mv){ state.months[vk]=mv; loadedMonths[vk]=true; }
     let legacy=null;
     if(!base && !curr && !evs && !mks) legacy=await getJSON('config',null);
     const cfg=legacy||{};
@@ -3656,6 +3672,39 @@
     tbl.querySelectorAll('[data-role="slot-def"]').forEach(el=>el.onchange=()=>{ state.slots[+el.dataset.idx].def=el.value; saveBase(); renderSlots(); });
     tbl.querySelectorAll('[data-role="slot-del"]').forEach(el=>el.onclick=()=>{ state.slots.splice(+el.dataset.idx,1); saveBase(); renderSlots(); });
   }
+  // ---------- 다른 기기에서 고친 내용 다시 가져오기 ----------
+  let hiddenAt=0, lastPull=0, pulling=false;
+  const PULL_AFTER=+(window.__PULL_AFTER_MS||8000);   // 이 시간 넘게 안 보다가 돌아오면 확인
+  function backAgain(){
+    const long=hiddenAt && (Date.now()-hiddenAt>=PULL_AFTER);
+    hiddenAt=0;
+    if(long) pullLatest(true);
+  }
+  async function pullLatest(force,retry){
+    if(STORE.mode!=='server'||pulling) return;
+    const now=Date.now();
+    if(!force && now-lastPull<4000) return;
+    lastPull=now; pulling=true;
+    try{
+      if(hasUnsaved()||isTyping()){ if(!retry) setTimeout(()=>pullLatest(true,true),5000); return; }
+      const changed=await loadAll({refresh:true});
+      if(changed){
+        await render();
+        try{ const f=$id('saveFlag'); f.textContent='☁ 다른 기기의 내용을 불러왔어요'; setTimeout(()=>{ if(f.textContent.indexOf('불러왔어요')>=0) f.textContent=''; },2500); }catch(e){}
+      }
+    }catch(e){} finally{ pulling=false; }
+  }
+  try{
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='hidden'){ hiddenAt=hiddenAt||Date.now(); }
+      else backAgain();
+    });
+    window.addEventListener('focus',backAgain);
+    window.addEventListener('blur',()=>{ hiddenAt=hiddenAt||Date.now(); });
+    window.addEventListener('pageshow',e=>{ if(e.persisted) pullLatest(true); });
+    window.addEventListener('online',()=>pullLatest(true));
+  }catch(e){}
+
   function renderFontChips(){
     const row=$id('fontChips'); if(!row) return;
     const cur=state.font||'konkon';
