@@ -85,7 +85,7 @@
   /* ───────── 상단 ───────── */
   .head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px 20px;margin:0 0 20px;}
   .head-left{display:flex;align-items:center;gap:10px;min-width:0;}
-  .month-title{font-family:var(--font-display);font-size:var(--fs-7);font-weight:700;letter-spacing:-.03em;line-height:1.1;white-space:nowrap;margin:0 4px 0 2px;}
+  .month-title{font-family:var(--font-display);font-size:31px;font-weight:700;letter-spacing:-.03em;line-height:1.1;white-space:nowrap;margin:0 4px 0 2px;}
   .nav-btn{width:32px;height:32px;border:none;border-radius:50%;background:var(--fill);color:var(--label-2);display:inline-flex;align-items:center;justify-content:center;padding:0;transition:background .15s,color .15s;}
   .nav-btn:hover{background:var(--tint);color:var(--class-accent);}
   .nav-btn:active{transform:scale(.94);}
@@ -195,12 +195,11 @@
     user-select:none;-webkit-user-select:none;touch-action:manipulation;white-space:pre-wrap;word-break:break-word;transition:background .12s,color .12s;}
   .task-line:hover{background:var(--fill-2);}
   .task-line:active{background:var(--fill);}
-  .task-line.st-ing{background:var(--tint);font-weight:600;}
-  .task-line.st-ing::after{content:'진행 중';display:inline-block;margin-left:6px;padding:0 7px;border-radius:999px;font-size:var(--fs-1);font-weight:600;line-height:17px;vertical-align:1px;white-space:nowrap;color:var(--class-accent);background:var(--surface);box-shadow:0 0 0 1px color-mix(in srgb,var(--class-accent) 45%,transparent);}
-  .task-line.st-done{color:var(--label-3) !important;font-weight:400 !important;text-decoration:line-through;text-decoration-color:var(--label-3);}
-  .task-line.st-done::after{content:'';display:inline-block;width:12px;height:12px;margin-left:6px;vertical-align:-1px;background:var(--green);
-    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat;
-    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E") center/contain no-repeat;}
+  .task-line.st-ing{background:color-mix(in srgb,var(--c,var(--class-accent)) 9%,transparent);font-weight:600;}
+  .task-line.st-ing .pst{background:conic-gradient(var(--c,var(--class-accent)) 0 50%,transparent 0 100%);}
+  .task-line.st-done{color:var(--label-3) !important;font-weight:400 !important;}
+  .task-line.st-done .pt{text-decoration:line-through;text-decoration-color:var(--label-3);}
+  .task-line.st-done .pst{box-shadow:none;background:var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E") center/9px no-repeat;}
   .task-item.wk-item .task-line{font-weight:600;}
   .task-item.wk-item .task-line.st-done{font-weight:400 !important;}
   .task-item.carried .task-line:not(.st-done){color:var(--red);}
@@ -244,6 +243,7 @@
   .st-btn{border:none;background:none;color:var(--label-3);font-size:var(--fs-3);padding:0 2px;margin-top:3px;}
   .st-btn.st-ing,.st-btn.st-done{color:var(--class-accent);}
   .auto-task .auto-text{flex:1;min-width:0;}
+  .auto-task .auto-text .pt{flex:1;min-width:0;}
   .auto-tag{display:inline-block;font-size:var(--fs-1);font-weight:600;color:var(--blue);background:color-mix(in srgb,var(--blue) 14%,transparent);border-radius:999px;padding:0 7px;margin-right:5px;vertical-align:1px;line-height:16px;}
   .auto-sub{font-size:var(--fs-1);color:var(--label-2);font-weight:400;}
 
@@ -714,26 +714,41 @@
 
   /* 기간 업무: 업무 한 줄과 같은 크기, 왼쪽 색 띠로 이어짐을 표시 */
   .span-item{position:relative;}
-  .span-line{display:flex;align-items:center;gap:7px;position:relative;padding-left:12px;}
+  .task-line{display:flex;align-items:flex-start;gap:7px;}
+  .task-line > .pt{flex:1;min-width:0;}
+  .span-line{position:relative;padding-left:12px;align-items:center;}
   .span-line::before{content:'';position:absolute;left:3px;top:3px;bottom:3px;width:3px;border-radius:2px;background:var(--c);}
   .span-line.h::before{top:5px;border-radius:2px 2px 0 0;}
   .span-line.t::before{bottom:5px;border-radius:0 0 2px 2px;}
-  .span-line .pt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .span-line .pn{flex:none;font-size:var(--fs-1);color:var(--label-3);font-variant-numeric:tabular-nums;}
-  .pst{flex:none;width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 1.7px var(--c);cursor:pointer;position:relative;}
+  .span-line .pn{flex:none;font-size:var(--fs-1);color:var(--label-3);font-variant-numeric:tabular-nums;align-self:center;}
+  .pst{flex:none;width:13px;height:13px;margin-top:3px;border-radius:50%;box-shadow:inset 0 0 0 1.7px var(--c,var(--label-3));cursor:pointer;position:relative;}
+  .span-line .pst{margin-top:0;}
   .pst::after{content:'';position:absolute;inset:-7px;}
-  .span-line.st-ing{background:color-mix(in srgb,var(--c) 10%,transparent);}
-  .span-line.st-ing .pst{background:conic-gradient(var(--c) 0 50%,transparent 0 100%);}
-  .span-line.st-ing .pt{font-weight:600;}
-  .span-line.st-ing::after{content:none;}
-  .span-line.st-done{color:var(--label-3) !important;}
-  .span-line.st-done .pt{text-decoration:line-through;}
   .span-line.st-done::before{opacity:.45;}
-  .span-line.st-done .pst{box-shadow:none;background:var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E") center/9px no-repeat;}
-  .span-line.st-done::after{content:none;}
   .ev-more{font-size:var(--fs-1);color:var(--label-2);padding:2px 8px;}
   .day-cell.sunday .task-list,.day-cell.saturday .task-list{margin-top:4px;}
   @media (max-width:760px){ .pst{width:16px;height:16px;} }
+
+  /* ───────── 기분 좋은 요소 ───────── */
+  .confetti{position:fixed;z-index:95;width:7px;height:7px;border-radius:2px;pointer-events:none;
+    animation:cfti .8s cubic-bezier(.2,.7,.3,1) forwards;}
+  @keyframes cfti{
+    0%{opacity:1;transform:translate(0,0) rotate(0) scale(.6)}
+    100%{opacity:0;transform:translate(var(--dx),calc(var(--dy) + 26px)) rotate(var(--rot)) scale(1)}}
+  .praise{position:fixed;left:50%;bottom:76px;transform:translate(-50%,10px);opacity:0;z-index:96;pointer-events:none;
+    background:var(--label);color:var(--surface);font-size:var(--fs-3);font-weight:600;letter-spacing:-.01em;
+    padding:9px 18px;border-radius:999px;box-shadow:var(--shadow-2);transition:opacity .2s,transform .2s;max-width:80vw;text-align:center;}
+  .praise.show{opacity:1;transform:translate(-50%,0);}
+  .quote{margin:0 0 8px;padding:8px 11px;border-radius:var(--r-m);background:var(--fill-2);}
+  .quote .q-t{display:block;font-size:var(--fs-2);line-height:1.55;color:var(--label-2);font-style:italic;}
+  .quote .q-a{display:block;margin-top:3px;font-size:var(--fs-1);color:var(--label-3);}
+  @media print{ .quote,.praise,.confetti{display:none !important;} }
+  .month-title{cursor:default;-webkit-user-select:none;user-select:none;}
+  .class-block.skipped .swap-note{margin-top:6px;}
+  .skip-notes{padding:0 10px 9px;font-size:var(--fs-2);color:var(--label-2);line-height:1.5;}
+  .skip-notes b{font-weight:600;color:var(--label);margin-right:4px;}
+  @media (prefers-reduced-motion: reduce){ .confetti{display:none;} }
+
   /* ───────── 인쇄 ───────── */
   @media print{
     body{padding:6px;background:#fff;}
@@ -760,8 +775,8 @@
     </div>
     <div class="head-right">
       <div class="viewswitch">
-        <button class="vbtn active" id="viewMonth" title="한 달 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9.5h18M9 9.5V21M15 9.5V21M3 15.2h18"/></svg><span>월</span></button>
-        <button class="vbtn" id="viewWeek" title="한 주 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9.5h18M7.5 9.5V21M12 9.5V21M16.5 9.5V21"/></svg><span>주</span></button>
+        <button class="vbtn active" id="viewMonth" title="한 달 보기" aria-label="한 달 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9.5h18M9 9.5V21M15 9.5V21M3 15.2h18"/></svg><span>Month</span></button>
+        <button class="vbtn" id="viewWeek" title="한 주 보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9.5h18M7.5 9.5V21M12 9.5V21M16.5 9.5V21"/></svg><span>Week</span></button>
       </div>
       <span class="head-btns">
       <button class="btn" id="searchBtn" title="검색"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="lb">검색</span></button>
@@ -779,8 +794,8 @@
     <button class="bk-skip" id="bkSkip">이번 달은 넘기기</button>
   </div>
   <div class="weekday-row">
-    <div class="wd sun">일</div><div class="wd">월</div><div class="wd">화</div><div class="wd">수</div>
-    <div class="wd">목</div><div class="wd">금</div><div class="wd sat">토</div>
+    <div class="wd sun">Sun</div><div class="wd">Mon</div><div class="wd">Tue</div><div class="wd">Wed</div>
+    <div class="wd">Thu</div><div class="wd">Fri</div><div class="wd sat">Sat</div>
   </div>
 
   <div class="grid-scroll"><div class="calendar-grid" id="calendarGrid"></div></div>
@@ -1022,7 +1037,7 @@
         <div class="sec-head"><h3>사용법</h3></div>
 
       <details class="faq" open><summary>업무와 주간 목표</summary><div class="faq-body"><ul>
-        <li>글자를 <b>한 번 누르면</b> 상태가 바뀝니다. 대기 → 진행 중 → 완료.</li>
+        <li>왼쪽 <b>동그라미</b>나 글자를 누르면 상태가 바뀝니다. 빈 원(대기) → 반쯤 찬 원(진행 중) → 초록 체크(완료).</li>
         <li>오른쪽 <b>⋯ 버튼</b>(마우스를 올리면 나타나고, 폰에서는 항상 보여요)에서 글 고치기 · 다음 근무일로 넘기기 · 형광펜 색 · 지우기를 합니다. 글자를 두 번 누르거나 폰에서 길게 눌러도 고칠 수 있어요.</li>
         <li>PC에서는 업무와 주간 목표를 끌어서 다른 날·다른 주로 옮길 수 있습니다.</li>
         <li>주간 목표는 각 주 맨 위의 띠에 적습니다. 끝내지 못한 목표는 다음 주로 자동으로 넘어가고 빨간 글씨와 "지난주" 표시가 붙어요.</li>
@@ -1037,7 +1052,7 @@
       </ul></div></details>
       <details class="faq"><summary>여러 날에 걸친 업무 (예: 세특 작성)</summary><div class="faq-body"><ul>
         <li>세특 작성처럼 며칠 걸리는 일은 <b>날짜 숫자를 누르거나, 누른 채 끝나는 날까지 끌어서</b> 만듭니다. 그 기간의 <b>업무란마다 한 줄씩</b> 들어가고, 왼쪽 색 띠로 이어져 보여요. 오른쪽 숫자(2/3)는 며칠째인지입니다.</li>
-        <li>왼쪽 <b>동그라미를 누르면</b> 상태가 바뀌고(대기 → 진행 중 → 완료), 기간 전체에 함께 반영됩니다. 글자를 누르면 제목·기간·분류·메모를 고치거나 지울 수 있어요.</li>
+        <li>보통 업무와 모양이 같고, 왼쪽에 <b>색 띠</b>와 오른쪽에 <b>며칠째인지(2/3)</b>가 더 붙습니다. 동그라미를 누르면 기간 전체의 상태가 함께 바뀌고, 글자를 누르면 제목·기간·분류·메모를 고치거나 지울 수 있어요.</li>
         <li>이미 적은 업무도 ⋯ → <b>"기간 정하기"</b>로 여러 날로 늘릴 수 있습니다.</li>
         <li>하루짜리를 이 창에서 만들면 그날의 업무 목록에 들어갑니다. 반복(매일·매주·매월·매년)도 정할 수 있어요.</li>
         <li>기간이 끝났는데 완료하지 못한 업무는 오늘 칸의 <b>"지난 미완료"</b>에 모입니다.</li>
@@ -1310,6 +1325,28 @@
     if(mt&&mt.setAttribute) mt.setAttribute('content',dark?'#000000':'#F2F2F7');
   }
 
+  // 오늘 칸에 하루 한 줄 (날짜로 정해져서 하루 종일 같은 문장)
+  const QUOTES=[
+    ['A word after a word after a word is power.','Margaret Atwood'],
+    ['There is no friend as loyal as a book.','Ernest Hemingway'],
+    ['The limits of my language mean the limits of my world.','Ludwig Wittgenstein'],
+    ['A teacher affects eternity.','Henry Adams'],
+    ['Small steps every day.',''],
+    ['You can’t use up creativity. The more you use, the more you have.','Maya Angelou'],
+    ['Today is a good day to begin.',''],
+    ['Tell me and I forget. Teach me and I remember.','Benjamin Franklin'],
+    ['Nothing is impossible. The word itself says “I’m possible.”','Audrey Hepburn'],
+    ['Done is better than perfect.',''],
+    ['Teaching is the greatest act of optimism.','Colleen Wilcox'],
+    ['One class at a time.',''],
+    ['Words are, of course, the most powerful drug used by mankind.','Rudyard Kipling'],
+    ['The beautiful thing about learning is nobody can take it away from you.','B.B. King'],
+    ['Be the reason someone loves English today.','']
+  ];
+  function quoteOf(ds){
+    let h=0; for(let i=0;i<ds.length;i++) h=(h*31+ds.charCodeAt(i))>>>0;
+    return QUOTES[h%QUOTES.length];
+  }
   const PREP_KINDS=['모의고사','지필평가','월말'];
   const DEFAULT_PREP={
     '모의고사':['칠판에 시간표 붙이기','응시 현황 작성하기','컴퓨터용 사인펜·수정테이프 챙기기','자리 바꾸기','유의사항 안내하기'],
@@ -1329,6 +1366,9 @@
   const WD_KEYS=['sun','mon','tue','wed','thu','fri','sat'];
   const WD_LABELS={mon:'월',tue:'화',wed:'수',thu:'목',fri:'금'};
   const WD_ALL=['일','월','화','수','목','금','토'];
+  const WD_EN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MON_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MON_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   const DEFAULT_TIMETABLE={
     mon:['','1-8','','1-5','1-4','','1-3'],
@@ -2140,7 +2180,8 @@
       const len=Math.max(0,dayDiff(ev.start,ev.end||ev.start))+1, nth=dayDiff(occ,dk)+1;
       html+=`<div class="task-item span-item st-row-${sst||'none'} ${sst==='done'?'done':''}">
         <span class="span-line task-line st-${sst||'wait'} ${x.head?'h':''} ${x.tail?'t':''}" style="--c:${cat.c}"
-          data-role="ev-open" data-id="${escAttr(ev.id)}" data-occ="${occ}" title="${escAttr((ev.title||'')+` · ${len}일 중 ${nth}일째`)}"><span class="pst" data-role="span-st" data-id="${escAttr(ev.id)}" data-occ="${occ}" title="누르면 상태 바뀜"></span><span class="pt">${esc(ev.title||'(제목 없음)')}</span><span class="pn">${nth}/${len}</span></span>
+          data-role="span-st" data-id="${escAttr(ev.id)}" data-occ="${occ}" title="${escAttr((ev.title||'')+` · ${len}일 중 ${nth}일째 · 누르면 상태 바뀜`)}"><span class="pst" data-role="span-st" data-id="${escAttr(ev.id)}" data-occ="${occ}" title="누르면 상태 바뀜"></span><span class="pt">${esc(ev.title||'(제목 없음)')}</span><span class="pn">${nth}/${len}</span></span>
+        <span class="task-tools"><button class="more-btn" title="더 보기" aria-label="더 보기" data-role="span-more" data-id="${escAttr(ev.id)}" data-occ="${occ}">${ico('more')}</button></span>
       </div>`;
     }
     if(hidden) html+=`<div class="ev-more">기간 업무 +${hidden}</div>`;
@@ -2159,13 +2200,13 @@
         ${t.carried?`<span class="carry-tag" title="${t.carried}주 밀림">${t.carried>1?t.carried+'주':'지난주'}</span>`:''}
         ${(editKey===`w|${wk}|${i}`||!(t.text||'').trim())
           ? `<textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="wk-text" data-wk="${wk}" data-idx="${i}" data-editkey="w|${wk}|${i}" placeholder="이번 주 할 일">${esc(t.text)}</textarea>`
-          : `<div class="task-line st-${statusOf(t)||'wait'}" style="${hlStyle(t.hl)}" data-role="wk-cycle" data-wk="${wk}" data-idx="${i}" data-editkey="w|${wk}|${i}" title="누르면 상태 바뀜 · 더 보기는 오른쪽 ⋯ 버튼">${esc(t.text)}</div>`}
+          : `<div class="task-line st-${statusOf(t)||'wait'}" style="${hlStyle(t.hl)}" data-role="wk-cycle" data-wk="${wk}" data-idx="${i}" data-editkey="w|${wk}|${i}" title="누르면 상태 바뀜 · 더 보기는 오른쪽 ⋯ 버튼"><span class="pst" data-role="wk-dot" data-wk="${wk}" data-idx="${i}" title="누르면 상태 바뀜"></span><span class="pt">${esc(t.text)}</span></div>`}
         <span class="task-tools"><button class="more-btn" title="더 보기" aria-label="더 보기" data-role="wk-more" data-wk="${wk}" data-idx="${i}" data-hl="${t.hl||''}">${ico('more')}</button></span>
       </div>`).join('');
     const ghost=`<div class="task-item wk-item ghost">
         <textarea rows="1" class="grow" data-role="wk-new" data-wk="${wk}" placeholder="이번 주 할 일"></textarea>
       </div>`;
-    return `<div class="wk-title">${ico('flag')}주간 목표</div><div class="wk-range">${range}</div>${list?'':'<span class="wk-empty">아직 없음</span>'}
+    return `<div class="wk-title">${ico('flag')}This Week</div><div class="wk-range">${range}</div>${list?'':'<span class="wk-empty">아직 없음</span>'}
       <div class="section-label"><span></span><button class="add-mini" data-role="wk-add" data-wk="${wk}">+ 추가</button></div>
       ${list?`<div class="task-list">${list}${ghost}</div>`:''}`;
   }
@@ -2216,7 +2257,7 @@
 
     if(wd===0){
       return `<div class="day-cell sunday ${inMonth?'':'other-month'} ${(inMonth&&dk<TODAY_STR)?'is-past':''} ${dk===TODAY_STR?'is-today':''}" data-date="${dk}" ${dk===TODAY_STR?'id="todayCell"':''}>
-        <div class="day-head"><div class="${numCls}">${dayNum}<span class="wd-label">${WD_ALL[wd]}</span></div>${hol?`<div class="holiday-name">${hol}</div>`:''}</div>
+        <div class="day-head"><div class="${numCls}">${dayNum}<span class="wd-label">${WD_EN[wd]}</span></div>${hol?`<div class="holiday-name">${hol}</div>`:''}</div>
         ${pillsHTML(dk)}
         ${(inMonth&&assess)?`<div class="assess-line">${esc(assess)}</div>`:''}
         ${(inMonth&&ev&&ev.t)?`<div class="event-line">${esc(ev.t)}</div>`:''}
@@ -2228,7 +2269,7 @@
     // 토요일 — 업무·수업 없음, 날짜와 일정만
     if(wd===6){
       return `<div class="day-cell saturday ${dk<TODAY_STR?'is-past':''} ${dk===TODAY_STR?'is-today':''}" data-date="${dk}" ${dk===TODAY_STR?'id="todayCell"':''}>
-        <div class="day-head"><div class="${numCls}">${dayNum}<span class="wd-label">${WD_ALL[wd]}</span></div>${hol?`<span class="holiday-name">${hol}</span>`:''}</div>
+        <div class="day-head"><div class="${numCls}">${dayNum}<span class="wd-label">${WD_EN[wd]}</span></div>${hol?`<span class="holiday-name">${hol}</span>`:''}</div>
         ${pillsHTML(dk)}
         ${assess?`<div class="assess-line">${esc(assess)}</div>`:''}
         ${ev&&ev.t?`<div class="event-line">${esc(ev.t)}</div>`:''}
@@ -2243,7 +2284,7 @@
       <div class="task-item st-row-${statusOf(t)||'none'} ${statusOf(t)==='done'?'done':''} hl-${t.hl||'none'}" draggable="true" data-drag="t|${dayKey}|${i}">
         ${(editKey===`t|${dayKey}|${i}`||!(t.text||'').trim())
           ? `<textarea rows="1" class="grow" style="${hlStyle(t.hl)}" data-role="task-text" data-date="${dayKey}" data-idx="${i}" data-editkey="t|${dayKey}|${i}" placeholder="업무">${esc(t.text)}</textarea>`
-          : `<div class="task-line st-${statusOf(t)||'wait'}" style="${hlStyle(t.hl)}" data-role="task-cycle" data-date="${dayKey}" data-idx="${i}" data-editkey="t|${dayKey}|${i}" title="누르면 상태 바뀜 · 더 보기는 오른쪽 ⋯ 버튼">${esc(t.text)}</div>`}
+          : `<div class="task-line st-${statusOf(t)||'wait'}" style="${hlStyle(t.hl)}" data-role="task-cycle" data-date="${dayKey}" data-idx="${i}" data-editkey="t|${dayKey}|${i}" title="누르면 상태 바뀜 · 더 보기는 오른쪽 ⋯ 버튼"><span class="pst" data-role="task-dot" data-date="${dayKey}" data-idx="${i}" title="누르면 상태 바뀜"></span><span class="pt">${esc(t.text)}</span></div>`}
         ${t.moved?('<span class="moved-tag" title="연기된 일">'+ico('moved')+'</span>'):''}
         <span class="task-tools"><button class="more-btn" title="더 보기" aria-label="더 보기" data-role="task-more" data-date="${dayKey}" data-idx="${i}" data-hl="${t.hl||''}">${ico('more')}</button></span>
       </div>`).join('');
@@ -2289,7 +2330,7 @@
           <input type="text" class="cls-text" data-role="override" data-key="${escAttr(key)}" value="${escAttr(a.lesson)}" placeholder="${a.over?'자습 (진도 끝)':'수업 내용'}">
           ${a.overridden?`<button class="ov-reset" data-role="ov-reset" data-key="${escAttr(key)}" title="직접 고친 내용이에요. 누르면 진도 목록대로 돌아갑니다">${ico('undo')}</button>`:''}
         </div>
-        ${(a.isExtra||a.swapped)?swapNoteHTML(dk,p,a.isExtra?'어느 시간 보강인지':'누구와 교체했는지'):''}
+        ${(a.isExtra||a.swapped)?swapNoteHTML(dk,p,a.isExtra?'어느 시간 보강인지':'누구와 교체했는지'):(a.reason?swapNoteHTML(dk,p,`메모 (예: ${a.reason==='자습'?'자습 과제·프린트':'다음 시간 안내'})`):'')}
       </div>`;
     }).join('');
 
@@ -2306,6 +2347,8 @@
           <span class="skip-arrow">${ico('chevR')}</span>
         </button>
         <div class="skip-list">${periods.map(p=>`<span class="skip-chip">${p}교시 ${esc(shortName(dayAssign[p].className))}</span>`).join('')}</div>
+        ${(function(){ const ns=periods.filter(p=>(state.swapNotes[`${dk}|${p}`]||'').trim());
+          return ns.length?`<div class="skip-notes">${ns.map(p=>`<div><b>${p}교시</b> ${esc(state.swapNotes[`${dk}|${p}`])}</div>`).join('')}</div>`:''; })()}
       </div>`;
     } else if(groupable && groupOpen){
       classHTML=`<button class="skip-fold" data-role="skip-toggle" data-date="${dk}" aria-expanded="true">${ico('chevD')}<span>${esc(dayReason)} · 한 줄로 접기</span></button>`+fullClassHTML;
@@ -2360,7 +2403,7 @@
     const nLesson=periods.filter(p=>!dayAssign[p].reason&&!dayAssign[p].emptied).length;
     const sumTxt=[nLesson?`수업 ${nLesson}`:'',nTask?`업무 ${nTask}`:'',(!nLesson&&!nTask)?(hol||dayReason||'기록 없음'):''].filter(Boolean).join(' · ');
     return `<div class="day-cell ${state.nightDuty[dk]?'night-on':''} ${noClass?'noclass':''} ${assess?'assess-day':''} ${isPast?'is-past':''} ${isPast&&pastOpen?'expanded':''} ${dk===TODAY_STR?'is-today':''}" ${dk===TODAY_STR?'id="todayCell"':''} data-date="${dayKey}">
-      <div class="day-head"><div class="${numCls}">${dayNum}<span class="wd-label">${WD_ALL[wd]}</span></div>
+      <div class="day-head"><div class="${numCls}">${dayNum}<span class="wd-label">${WD_EN[wd]}</span></div>
         ${isPast?`<button class="day-toggle" data-role="day-toggle" data-date="${dk}" aria-label="펼치기/접기"><span class="day-sum">${esc(sumTxt)}</span>${ico(pastOpen?'chevD':'chevR')}</button>`:''}
         <span class="head-right-mini">
           <button class="night-btn ${state.nightDuty[dk]?'on':''}" title="야자감독" data-role="night" data-date="${dk}">야자</button>
@@ -2394,6 +2437,9 @@
           </div>`;
         }).join('');
       })()}
+      ${dk===TODAY_STR?(function(){ const q=quoteOf(dk);
+        return `<div class="quote" title="${escAttr(q[1]||'')}"><span class="q-t">${esc(q[0])}</span>${q[1]?`<span class="q-a">— ${esc(q[1])}</span>`:''}</div>`;
+      })():''}
       ${(function(){
         if(dk!==TODAY_STR) return '';
         const od=overdueTasks();
@@ -2436,14 +2482,14 @@
           </div>`:''}
         </div>`;
       })()}
-      <div class="section-label"><span class="sl-t">${ico('tasks')}업무</span> <button class="add-mini" data-role="task-add" data-date="${dayKey}">+ 추가</button></div>
+      <div class="section-label"><span class="sl-t">${ico('tasks')}To Do</span> <button class="add-mini" data-role="task-add" data-date="${dayKey}">+ 추가</button></div>
       <div class="task-list">${pillsInner(dk)}${draftTasksFor(dk).map(a=>`
         <div class="task-item auto-task st-row-${a.st||'none'} ${a.st==='done'?'done':''}">
-          <span class="auto-text task-line st-${a.st||'wait'}" data-role="auto-status" data-key="${escAttr(a.key)}" title="누르면 상태 바뀜"><span class="auto-tag">자동</span>${esc(a.text)} <span class="auto-sub">(시험 ${a.exam.slice(5).replace('-','/')})</span></span>
+          <span class="auto-text task-line st-${a.st||'wait'}" data-role="auto-status" data-key="${escAttr(a.key)}" title="누르면 상태 바뀜"><span class="pst"></span><span class="pt"><span class="auto-tag">자동</span>${esc(a.text)} <span class="auto-sub">(시험 ${a.exam.slice(5).replace('-','/')})</span></span></span>
           <span class="task-tools"><button class="del" title="이번엔 숨기기" data-role="auto-hide" data-key="${escAttr(a.key)}">${ico('x')}</button></span>
         </div>`).join('')}${tasksHTML}</div>
       <hr class="divider">
-      <div class="section-label"><span class="sl-t">${ico('book')}수업</span> <button class="add-mini" data-role="class-add" data-date="${dk}">+ 보강 추가</button></div>
+      <div class="section-label"><span class="sl-t">${ico('book')}Classes</span> <button class="add-mini" data-role="class-add" data-date="${dk}">+ 보강 추가</button></div>
       <div class="class-rows">${classHTML}${dsHTML}${slotHTML}${extraHTML}</div>
     </div>`;
   }
@@ -2589,7 +2635,7 @@
       }
       const a=cells[1], b=cells[5];
       $id('monthTitle').textContent=
-        `${a.m+1}월 ${a.d}일 – ${b.m+1===a.m+1?'':(b.m+1)+'월 '}${b.d}일`;
+        `${MON_SHORT[a.m]} ${a.d} – ${b.m===a.m?'':MON_SHORT[b.m]+' '}${b.d}`;
     } else {
       const y=state.year,m=state.month;
       const firstDow=new Date(y,m,1).getDay(), total=daysInMonth(y,m);
@@ -2599,7 +2645,7 @@
       for(let d=1;d<=total;d++) cells.push({y:y,m:m,d:d,cur:true});
       const trailing=(7-((firstDow+total)%7))%7;
       for(let d=1;d<=trailing;d++) cells.push({y:ny,m:nm,d:d,cur:false});
-      $id('monthTitle').textContent=`${y}년 ${m+1}월`;
+      $id('monthTitle').textContent=`${MON_EN[m]} ${y}`;
     }
 
     // 필요한 달 데이터 불러오기
@@ -2756,6 +2802,82 @@
     refreshFast(dts,wks);
   });
 
+  // ---------- 완료했을 때 작은 축하 ----------
+  const PRAISE=['Well done!','Nice work!','One down!','Good job!','Keep going!','Crossed off!','So satisfying.','That’s one less.'];
+  const DAY_DONE=['All done for today.','Everything crossed off!','A clean slate. Nice.','You did it all.'];
+  function confettiAt(el,big){
+    try{
+      if(!el||!document.body) return;
+      if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const r=el.getBoundingClientRect(), x=r.left+16, y=r.top+r.height/2;
+      const cols=['var(--class-accent)','var(--green)','var(--blue)','var(--yellow)','var(--pink)'];
+      const n=big?18:8;
+      for(let i=0;i<n;i++){
+        const d=document.createElement('i'); d.className='confetti';
+        const ang=(Math.PI*2*i)/n+Math.random(), dist=(big?46:28)+Math.random()*(big?34:18);
+        d.style.cssText=`left:${x}px;top:${y}px;background:${cols[i%cols.length]};--dx:${Math.cos(ang)*dist}px;--dy:${Math.sin(ang)*dist-14}px;--rot:${Math.random()*300-150}deg;animation-delay:${Math.random()*70}ms`;
+        document.body.appendChild(d); setTimeout(()=>d.remove(),900);
+      }
+    }catch(e){}
+  }
+  function praise(msg,big){
+    try{
+      let t=document.getElementById('praiseToast');
+      if(!t){ t=document.createElement('div'); t.id='praiseToast'; t.className='praise'; document.body.appendChild(t); }
+      t.textContent=msg; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+      clearTimeout(praise._t); praise._t=setTimeout(()=>t.classList.remove('show'),big?2600:1500);
+    }catch(e){}
+  }
+  // 그날 업무를 전부 끝냈는지
+  function dayAllDone(ds){
+    try{
+      const ts=(ensureDayD(ds).tasks||[]).filter(t=>(t.text||'').trim());
+      const sp=occurrencesIn(ds,ds).map(o=>spanSt(o.ev,o.start));
+      const all=ts.map(statusOf).concat(sp);
+      return all.length>0 && all.every(x=>x==='done');
+    }catch(e){ return false; }
+  }
+  function celebrate(el,ds){
+    const big=ds&&dayAllDone(ds);
+    confettiAt(el,big);
+    praise(big?DAY_DONE[Math.floor(Math.random()*DAY_DONE.length)]:PRAISE[Math.floor(Math.random()*PRAISE.length)],big);
+  }
+
+  // 기간 업무 ⋯ 메뉴 (보통 업무 메뉴와 같은 모양)
+  function openSpanCtx(btn){
+    closeCtx();
+    const id=escAttr(btn.dataset.id), occ=btn.dataset.occ;
+    const m=document.createElement('div'); m.className='ctx-menu'; m.setAttribute('role','menu');
+    m.innerHTML=`
+      <button class="ctx-item" data-role="span-edit" data-id="${id}" data-occ="${occ}">${ico('edit')}<span>고치기 (제목·기간·분류·메모)</span></button>
+      <button class="ctx-item danger" data-role="span-del" data-id="${id}">${ico('x')}<span>지우기</span></button>`;
+    document.body.appendChild(m); ctxMenu=m;
+    const r=btn.getBoundingClientRect(), mw=m.offsetWidth||220, mh=m.offsetHeight||90;
+    m.style.left=Math.max(8,Math.min(innerWidth-mw-8,r.right-mw))+'px';
+    m.style.top=(r.bottom+6+mh>innerHeight? Math.max(8,r.top-mh-6) : r.bottom+6)+'px';
+    m.addEventListener('click',e=>{ const b=e.target.closest('[data-role]'); if(b) handleGridClick({target:b,detail:1}); });
+  }
+
+  // 숨은 재미: 달 제목을 빠르게 다섯 번 누르면
+  const EGG=['Achievement unlocked: Master Planner','Plot twist: you’re doing great.','Teacher mode: legendary.','You’re someone’s favorite teacher.','Grammar police, off duty. ☕','10/10 would be your student again.'];
+  (function(){
+    const t=$id('monthTitle'); if(!t||!t.addEventListener) return;
+    let n=0, timer=null;
+    t.addEventListener('click',()=>{
+      n++; clearTimeout(timer); timer=setTimeout(()=>{ n=0; },1600);
+      if(n>=5){ n=0; confettiAt(t,true); setTimeout(()=>confettiAt(t,true),220); praise(EGG[Math.floor(Math.random()*EGG.length)],true); }
+    });
+  })();
+  // 금요일 오후에 처음 열면 한마디 (하루 한 번)
+  function fridayHello(){
+    try{
+      const now=new Date(); if(now.getDay()!==5||now.getHours()<14) return;
+      const k='mp:fri', d=fmtDate(now);
+      if(localStorage.getItem(k)===d) return; localStorage.setItem(k,d);
+      setTimeout(()=>praise(['Happy Friday! Almost there.','It’s Friday. You made it.','Friday afternoon — slow down a little.'][now.getDate()%3],true),1200);
+    }catch(e){}
+  }
+
   // ---------- 업무 ⋯ 메뉴 ----------
   let ctxMenu=null;
   function closeCtx(){ if(ctxMenu){ ctxMenu.remove(); ctxMenu=null; } }
@@ -2806,25 +2928,31 @@
     }
     else if(role==='extra-class-del'){ delete state.swaps[el.dataset.key]; saveMarks(); render(); }
     else if(role==='task-more'||role==='wk-more'){ openCtx(el); }
+    else if(role==='span-more'){ openSpanCtx(el); }
+    else if(role==='span-edit'){ closeCtx(); const ev=(state.calEvents||[]).find(x=>x.id===el.dataset.id); if(ev) openEvt(ev.start,ev.end,ev,{occ:el.dataset.occ}); }
+    else if(role==='span-del'){
+      closeCtx(); const ev=(state.calEvents||[]).find(x=>x.id===el.dataset.id);
+      if(ev && confirm('이 업무를 지울까요?'+(ev.repeat&&ev.repeat!=='none'?' (반복 업무 전체가 지워집니다)':''))){ state.calEvents=state.calEvents.filter(x=>x!==ev); saveCal(); render(); }
+    }
     else if(role==='skip-toggle'){ const d=el.dataset.date; (state.skipOpen=state.skipOpen||{})[d]=!state.skipOpen[d]; refreshFast([d],[]); }
     else if(role==='day-toggle'){ const d=el.dataset.date; (state.pastOpen=state.pastOpen||{})[d]=!state.pastOpen[d]; refreshFast([d],[]); }
     else if(role==='task-edit'){ startEdit(`t|${el.dataset.date}|${el.dataset.idx}`); }
     else if(role==='wk-edit'){ startEdit(`w|${el.dataset.wk}|${el.dataset.idx}`); }
-    else if(role==='task-cycle'){
+    else if(role==='task-dot'||role==='task-cycle'){
       if(longPressed){ longPressed=false; return; }
       const d=el.dataset.date, ix=+el.dataset.idx, t=ensureDayD(d).tasks[ix]; if(!t) return;
       const dbl=(e.detail>=2);   // 두 번 누르기: 첫 번째에서 한 칸 갔으니 두 칸 더 가서 원래대로 돌리고 고치기
       t.st=ST_ORDER[(ST_ORDER.indexOf(statusOf(t))+(dbl?2:1))%ST_ORDER.length]; delete t.done;
       scheduleMonthSave(d);
-      if(dbl) startEdit(`t|${d}|${ix}`); else refreshFast([d],[]);
+      if(dbl) startEdit(`t|${d}|${ix}`); else { const justDone=(t.st==='done'); refreshFast([d],[]); if(justDone) celebrate(el,d); }
     }
-    else if(role==='wk-cycle'){
+    else if(role==='wk-dot'||role==='wk-cycle'){
       if(longPressed){ longPressed=false; return; }
       const w=el.dataset.wk, ix=+el.dataset.idx, t=ensureWeek(w)[ix]; if(!t) return;
       const dbl=(e.detail>=2);
       t.st=ST_ORDER[(ST_ORDER.indexOf(statusOf(t))+(dbl?2:1))%ST_ORDER.length]; delete t.done;
       saveWeekly();
-      if(dbl) startEdit(`w|${w}|${ix}`); else refreshFast([],[w]);
+      if(dbl) startEdit(`w|${w}|${ix}`); else { const justDone=(t.st==='done'); refreshFast([],[w]); if(justDone) celebrate(el); }
     }
     else if(role==='prep-toggle'){
       const k=el.dataset.key;
@@ -2879,9 +3007,10 @@
       const ev=(state.calEvents||[]).find(x=>x.id===el.dataset.id);
       if(ev){
         const occ=el.dataset.occ||ev.start, cur=spanSt(ev,occ);
-        setSpanSt(ev,occ,ST_ORDER[(ST_ORDER.indexOf(cur)+1)%ST_ORDER.length]); saveCal();
+        const nx=ST_ORDER[(ST_ORDER.indexOf(cur)+1)%ST_ORDER.length];
+        setSpanSt(ev,occ,nx); saveCal();
         const len=Math.max(0,dayDiff(ev.start,ev.end||ev.start)), ds=[]; for(let i=0;i<=len;i++) ds.push(addDays(occ,i));
-        refreshFast(ds,[]);
+        refreshFast(ds,[]); if(nx==='done') celebrate(el,el.closest('.day-cell')&&el.closest('.day-cell').dataset.date);
       }
     }
     else if(role==='span-done'){
@@ -3342,7 +3471,7 @@
 
     const wdrowEl=document.querySelector('.weekday-row');
     const wdrow=wdrowEl?wdrowEl.outerHTML.replace('week-view',''):'';
-    const title=`${state.year}년 ${state.month+1}월`+(state.subtitle?` — ${state.subtitle}`:'');
+    const title=`${MON_EN[state.month]} ${state.year}`+(state.subtitle?` — ${state.subtitle}`:'');
 
     let body='';
     chunks.forEach((chunk,ci)=>{
@@ -3580,6 +3709,22 @@
     ideaEdit=state.ideas.length-1;
     saveIdeas(); renderIdeas();
   };
+
+  // 월 제목을 길게 누르면 (또는 세 번 누르면) 숨은 인사
+  (function(){
+    const t=$id('monthTitle'); if(!t) return;
+    let timer=null, taps=0, tapT=null;
+    const HELLO=['Hi, Ms. Seo 👋','You’re doing great.','Teaching is hard. You’re doing it anyway.','Coffee first, then the world.','The best teacher I know uses this planner.','수고했어, 오늘도.'];
+    const show=()=>{
+      praise(HELLO[Math.floor(Math.random()*HELLO.length)],true);
+      confettiAt(t,true);
+      try{ t.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:420,easing:'ease-out'}); }catch(e){}
+    };
+    t.style.cursor='default'; t.title='';
+    t.addEventListener('pointerdown',()=>{ clearTimeout(timer); timer=setTimeout(show,900); });
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>t.addEventListener(ev,()=>clearTimeout(timer)));
+    t.addEventListener('click',()=>{ taps++; clearTimeout(tapT); tapT=setTimeout(()=>taps=0,700); if(taps>=3){ taps=0; show(); } });
+  })();
 
   const helpBtn=$id('helpBtn');
   if(helpBtn) helpBtn.onclick=()=>{
@@ -4365,6 +4510,7 @@
     },120);
     setTimeout(()=>idle(autoSnapshot,20000),7000);
     checkMonthlyBackup();
+    fridayHello();
     try{ if(await migrateEvents()) await render(); }catch(e){}
     if(fast){
       try{
